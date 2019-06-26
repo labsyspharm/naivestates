@@ -6,5 +6,6 @@ Description: Assignment of predicted cell states to individual cells in a label-
 License: MIT
 Depends: R (>= 3.1.0)
 Imports:
-    tidyverse
+    tidyverse,
+    mixtools
 RoxygenNote: 6.1.1
