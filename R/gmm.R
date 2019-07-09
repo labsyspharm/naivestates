@@ -5,9 +5,11 @@
 ## Modifies a vector to have a single "activation" phase
 singleAct <- function( v )
 {
+    ## Identify the "activation" phase by its positive slope
     n <- length(v)
-    mni <- which.min(v)
-    mxi <- n - which.max(rev(v)) + 1
+    ph <- which( (v[2:n] - v[1:(n-1)]) > 0 )
+    mni <- min(ph)
+    mxi <- max(ph) + 1
     stopifnot( mni < mxi )
     v[1:mni] <- min(v)
     v[mxi:n] <- max(v)
@@ -17,13 +19,18 @@ singleAct <- function( v )
 ## Fits a two-component mixture model to the provided 1-D vector
 ## v - vector of values
 ## chName - name of the channel (for reporting only)
+## mu_init - vector of two values, each between 0 and 1, specifying the initial placement of Gaussian means
 ## rs - random seed to allow reproducibility
-mixEM <- function( v, chName, rs=100 )
+mixEM <- function( v, chName, mu_init, rs=100 )
 {
     set.seed(rs)
     cat( "Fitting a mixture model to", chName, "... " )
-    mix <- mixtools::normalmixEM( v, mu=c(-0.8,0.8), maxit=2000 )
-    mix[c("lambda","mu","sigma")]
+    mix <- mixtools::normalmixEM( v, mu=mu_init, maxit=2000 )
+
+    ## Reorder the means to be monotonically increasing
+    mdl <- mix[c("lambda","mu","sigma")]
+    j <- order(mdl$mu)
+    purrr::map( mdl, ~.x[j] )
 }
 
 ## Given a model returned by mixEM(), computes posterior probabilities
@@ -34,22 +41,28 @@ mutate_probs <- function( .df, vals, mix )
     stopifnot( mix$mu[1] < mix$mu[2] )
     s <- ensym(vals)
 
+    ## Adjust the values based on quantile limits
     ## Compute posterior probabilities of each value landing in negative and positive clusters
     .df %>% arrange(!!s) %>%
-        mutate( CN = mix$lambda[1]*dnorm(!!s, mix$mu[1], mix$sigma[1]),
-               CP = mix$lambda[2]*dnorm(!!s, mix$mu[2], mix$sigma[2]),
-               RawProb = CP/(CP+CN), Pos = singleAct(RawProb), Neg = 1-Pos )
+        mutate( AdjVal = (!!s - mix$lo)/(mix$hi - mix$lo),
+               CN = mix$lambda[1]*dnorm(AdjVal, mix$mu[1], mix$sigma[1]),
+               CP = mix$lambda[2]*dnorm(AdjVal, mix$mu[2], mix$sigma[2]),
+               Prob = singleAct(CP/(CP+CN)) )
 }
 
 ## Fit a Gaussian model to a set of channels
 ## X - matrix of marker expression
-## qq - value between 0 and 1. For each channel, the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
+## cid - column that contains cell IDs
+## qq - value between 0 and 0.5. For each channel, the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
 ## ... - columns to fit a GMM to
+## mu_init - vector of two values, each between 0 and 1, specifying the initial placement of Gaussian means
 ## seed - random seed to allow for reproducibility
-fitGMM <- function(X, qq, ..., seed=100)
+GMMfit <- function(X, cid, qq, ..., mu_init=c(0.2,0.8), seed=100)
 {
     ## Argument verification
     if( qq < 0 | qq > 0.5 ) stop( "qq argument must be in [0, .5] range" )
+    if( any(mu_init < 0) | any(mu_init > 1) )
+        stop( "mu_init argument values must be in [0, 1] range" )
     
     ## Isolate the marker values of interest
     MV <- X %>% gather( Marker, Values, ... ) %>% select( Marker, Values ) %>%
@@ -66,14 +79,20 @@ fitGMM <- function(X, qq, ..., seed=100)
         mutate_at( "Values", map, keep, ~(.x >= 0 & .x <=1) )
     
     ## Fit a mixture of two Gaussians to each marker
-    MVQ %>% mutate( GMM = map2(Values, Marker, mixEM, seed) ) %>%
+    G <- MVQ %>% mutate( GMM = map2(Values, Marker, mixEM, mu_init, seed) ) %>%
         mutate_at( "GMM", map2, .$QQ, c ) %>% select( Marker, GMM )
-    
-    ## P <- X %>% nest( -Marker, .key=Values ) %>% inner_join( MX, by="Marker" ) %>%
-    ##     mutate( PostProb = map2(Values, Fit, ~mutate_probs(.x, "Value", .y)) ) %>%
-    ##     select( -Values, -Fit ) %>% unnest()
+
+    ## Compute posterior probabilities on the original data
+    X %>% select( !!enquo(cid), G$Marker ) %>% gather( Marker, Value, -1 ) %>%
+        nest( -Marker, .key="Values" ) %>% inner_join(G) %>%
+        mutate( Values = map2(Values, GMM, ~mutate_probs(.x, "Value", .y)) )
 }
 
-## Compute the probability of marker expression, using previously trained GMM models
-## X - matrix of marker expression values
-##probGMM <- function(X, GMMs, 
+## Reshapes a GMMfit() dataframe to the original cell-by-marker
+## DF - data frame produced by GMMfit()
+GMMreshape <- function(DF)
+{
+    DF %>% select( -GMM ) %>% unnest() %>%
+        select( -Value, -AdjVal, -CN, -CP ) %>%
+        spread( Marker, Prob )
+}
