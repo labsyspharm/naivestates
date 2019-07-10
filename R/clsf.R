@@ -1,0 +1,65 @@
+## Using probabilities of marker expression, assign scores for each class
+##   in one or more dichotomies of interest via Naive Bayes
+##
+## by Artem Sokolov
+
+## Computes class-specific posterior probability for each cell in .df
+## .df - data frame, as returned by GMMreshape()
+## cid - column that contains cell IDs
+## vMarkers - character vector of markers that are expressed in the given class
+classPostProb <- function( .df, cid, vMarkers )
+{
+    ## Retrieve the name of the cell ID column
+    CID <- tidyselect::vars_select( names(.df), !!rlang::enquo(cid) )
+
+    ## Use probability as is for markers in the vector
+    ## Use 1-probability for markers not in the vector
+    P <- .df %>% dplyr::select( CID, tidyselect::everything() ) %>%
+        tidyr::gather( Marker, Prob, -1 ) %>%
+        dplyr::mutate( Prob = ifelse(Marker %in% vMarkers, Prob, 1-Prob) )
+    
+    ## Aggregate probabilities
+    P %>% dplyr::mutate_at( "Prob", log ) %>% dplyr::group_by( !!sym(CID) ) %>%
+        dplyr::summarize( logClassPP = sum(Prob) )
+}
+
+## Given a data frame, returns the name of the column that contains
+##  the largest value for each row
+maxCol <- function( .df )
+{
+    nm <- names(.df)
+    j <- purrr::pmap_int( .df, purrr::lift_vd(which.max) )
+    nm[j]
+}
+
+## Given a classification tasks, computes posterior probabilities for
+##   each class, using the provided marker -> class mapping
+## .df - data frame, as returned by GMMreshape()
+## cid - column that contains cell IDs
+## chMap - channel mapping, two-column data frame with columns Channel and Class
+## vTask - character vector of classes in the task
+taskPostProb <- function( .df, cid, chMap, vTask )
+{
+    ## Isolate the set of markers that are relevant for the current task
+    M1 <- chMap %>% dplyr::filter( Class %in% vTask )
+    X1 <- .df %>% dplyr::select( !!rlang::enquo(cid), M1$Channel )
+
+    ## Break the markers up by class
+    ## Compute posterior probabilities for each class
+    PP <- M1 %>% dplyr::group_by(Class) %>%
+        dplyr::summarize_at( "Channel", list ) %>%
+        tibble::deframe() %>%
+        purrr::map( ~classPostProb(X1, !!rlang::enquo(cid), .x) ) %>%
+        dplyr::bind_rows( .id="Class" ) %>%
+        tidyr::spread( Class, logClassPP )
+
+    ## Make the final call for each cell based on posterior probabilities
+    ## Avoid making calls for cells that have 0 probability for all classes
+    PP1 <- select( PP, -!!rlang::enquo(cid) )
+    fai <- function(...) {purrr::lift_vd(is.infinite)(...) %>% all()}
+    PP %>% dplyr::mutate( Call = maxCol(PP1),
+                  AllZero = pmap_lgl(PP1, fai),
+                  Call = ifelse(AllZero, NA, Call) ) %>%
+        dplyr::select( -AllZero )
+}
+
