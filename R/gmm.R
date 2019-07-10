@@ -53,11 +53,11 @@ mutate_probs <- function( .df, vals, mix )
 ## Fit a Gaussian model to a set of channels
 ## X - matrix of marker expression
 ## cid - column that contains cell IDs
-## qq - value between 0 and 0.5. For each channel, the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
 ## ... - columns to fit a GMM to
+## qq - value between 0 and 0.5. For each channel, the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
 ## mu_init - vector of two values, each between 0 and 1, specifying the initial placement of Gaussian means
 ## seed - random seed to allow for reproducibility
-GMMfit <- function(X, cid, qq, ..., mu_init=c(0.2,0.8), seed=100)
+GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
 {
     ## Argument verification
     if( qq < 0 | qq > 0.5 ) stop( "qq argument must be in [0, .5] range" )
@@ -65,8 +65,9 @@ GMMfit <- function(X, cid, qq, ..., mu_init=c(0.2,0.8), seed=100)
         stop( "mu_init argument values must be in [0, 1] range" )
     
     ## Isolate the marker values of interest
-    MV <- X %>% gather( Marker, Values, ... ) %>% select( Marker, Values ) %>%
-        group_by( Marker ) %>% summarize_at("Values",list)
+    MV <- X %>% tidyr::gather( Marker, Values, ... ) %>%
+        dplyr::select( Marker, Values ) %>%
+        dplyr::group_by( Marker ) %>% dplyr::summarize_at("Values",list)
     
     ## Verify that the data has been log-normalized
     if( range(MV$Values)[2] > 1000 )
@@ -74,25 +75,31 @@ GMMfit <- function(X, cid, qq, ..., mu_init=c(0.2,0.8), seed=100)
 
     ## Compute qq^th and (1-qq)^th quantiles
     ## Adjust and filter the values accordingly
-    MVQ <- MV %>% mutate( QQ = map( Values, ~list(lo=quantile(.x, qq), hi=quantile(.x, 1-qq)) ) ) %>%
-        mutate_at( "Values", map2, .$QQ, ~((.x-.y$lo) / (.y$hi-.y$lo)) ) %>%
-        mutate_at( "Values", map, keep, ~(.x >= 0 & .x <=1) )
+    fq <- ~list(lo=quantile(.x, qq), hi=quantile(.x, 1-qq))
+    MVQ <- MV %>% dplyr::mutate( QQ = purrr::map(Values, fq) ) %>%
+        dplyr::mutate_at( "Values", map2, .$QQ, ~((.x-.y$lo) / (.y$hi-.y$lo)) ) %>%
+        dplyr::mutate_at( "Values", map, keep, ~(.x >= 0 & .x <=1) )
     
     ## Fit a mixture of two Gaussians to each marker
-    G <- MVQ %>% mutate( GMM = map2(Values, Marker, mixEM, mu_init, seed) ) %>%
-        mutate_at( "GMM", map2, .$QQ, c ) %>% select( Marker, GMM )
-
+    G <- MVQ %>%
+        dplyr::mutate( GMM = purrr::map2(Values, Marker, mixEM, mu_init, seed) ) %>%
+        dplyr::mutate_at( "GMM", purrr::map2, .$QQ, c ) %>%
+        dplyr::select( Marker, GMM )
+    
     ## Compute posterior probabilities on the original data
-    X %>% select( !!enquo(cid), G$Marker ) %>% gather( Marker, Value, -1 ) %>%
-        nest( -Marker, .key="Values" ) %>% inner_join(G) %>%
-        mutate( Values = map2(Values, GMM, ~mutate_probs(.x, "Value", .y)) )
+    fmp <- ~mutate_probs(.x, "Value", .y)
+    X %>% dplyr::select( !!rlang::enquo(cid), G$Marker ) %>%
+        tidyr::gather( Marker, Value, -1 ) %>%
+            tidyr::nest( -Marker, .key="Values" ) %>%
+            dplyr::inner_join(G) %>%
+            dplyr::mutate( Values = purrr::map2(Values, GMM, fmp) )
 }
 
 ## Reshapes a GMMfit() dataframe to the original cell-by-marker
 ## DF - data frame produced by GMMfit()
 GMMreshape <- function(DF)
 {
-    DF %>% select( -GMM ) %>% unnest() %>%
-        select( -Value, -AdjVal, -CN, -CP ) %>%
-        spread( Marker, Prob )
+    DF %>% dplyr::select( -GMM ) %>% tidyr::unnest() %>%
+        dplyr::select( -Value, -AdjVal, -CN, -CP ) %>%
+            tidyr::spread( Marker, Prob )
 }
