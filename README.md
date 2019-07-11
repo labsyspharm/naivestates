@@ -37,3 +37,40 @@ The variable `fnData` will contain the filename of where the data lives on disk 
 
 After loading the .csv file, `X` now contains a cell-by-feature data frame consisting of Cell IDs in the first column, followed by marker expression values in subsequent columns. The last few columns also contain spatial characteristics, such as the cell position in the image, as well as its area and perimeter.
 
+### Channel -> Cell Type/State mapping
+
+The Naive Bayes framework requires predefined mapping of channels/markers to cell types/states. Currently, the framework assumes a binary association between the two (e.g., Immune cells express CD45, Stroma cells express SMA, etc.) As these relationships become more refined, future development will include support for probabilistic assignment of markers to cell types.
+
+The package includes an example mapping to along with the dataset above. As with the data itself, the mapping can be loaded into R or inspected directly by other tools and programming languages.
+
+``` r
+fnMap <- system.file( "examples/example1_chnlmap.csv", package="naivestates" )
+M <- read_csv( fnMap, col_types=cols() )
+# # A tibble: 19 x 2
+#    Channel              Class      
+#    <chr>                <chr>      
+#  1 Cell_25546ONMITF     Tumor      
+#  2 Cell_25546ONS100     Tumor      
+#  3 Cell_25546ONSMA      Stroma     
+#  4 Cell_25546ONVIMENTIN Stroma     
+#  5 Cell_25546ONVIMENTIN Mesenchymal
+#  6 Cell_25546ONCD4      Immune     
+#  7 Cell_25546ONCD4      T-hlp      
+#  8 Cell_25546ONCD4      T-reg      
+#  9 Cell_25546ONCD3      Immune     
+# 10 Cell_25546ONCD8      Immune     
+# 11 Cell_25546ONCD8      T-ctx      
+# 12 Cell_25546ONCD45RO   Immune     
+# 13 Cell_25546ONFOXP3    Immune     
+# 14 Cell_25546ONFOXP3    T-reg      
+# 15 Cell_25546ONPD1      Immune     
+# 16 Cell_25546ONECAD     Epithelial 
+# 17 Cell_25546ONCATENIN  Tumor      
+# 18 Cell_25546ONKERATIN  Epithelial 
+# 19 Cell_25546ONCD45     Immune     
+```
+
+There are several important points to highlight:
+1. When composing your own marker-cell type relationships, ensure that the resulting data frame has column names `Channel` and `Class`.
+2. Not every channel present in the dataset needs to have a mapping.
+3. The same channel may map to multiple classes. For example, VIMENTIN is mapped to Stroma and Mesenchymal classes in the example above.
