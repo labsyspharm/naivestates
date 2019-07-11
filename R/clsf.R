@@ -32,12 +32,18 @@ maxCol <- function( .df )
     nm[j]
 }
 
-## Given a classification tasks, computes posterior probabilities for
-##   each class, using the provided marker -> class mapping
-## .df - data frame, as returned by GMMreshape()
-## cid - column that contains cell IDs
-## chMap - channel mapping, two-column data frame with columns Channel and Class
-## vTask - character vector of classes in the task
+#' Per-cell class assignment in a given classification task
+#' 
+#' Given a classification tasks, computes posterior probabilities for
+#'   each class, using the provided marker -> class mapping
+#' 
+#' @param .df - data frame of GMM probabilities, as returned by GMMreshape()
+#' @param cid - name or index of column that contains cell IDs
+#' @param chMap - channel mapping, specified as two-column data frame with
+#'                columns Channel and Class
+#' @param vTask - character vector of classes in the task
+#' @return (Log) Posterior probability for each cell-class pair
+#' @export
 taskPostProb <- function( .df, cid, chMap, vTask )
 {
     ## Isolate the set of markers that are relevant for the current task

@@ -3,6 +3,8 @@
 ## by Artem Sokolov
 
 ## Modifies a vector to have a single "activation" phase
+##
+## Not exported
 singleAct <- function( v )
 {
     ## Identify the "activation" phase by its positive slope
@@ -21,6 +23,8 @@ singleAct <- function( v )
 ## chName - name of the channel (for reporting only)
 ## mu_init - vector of two values, each between 0 and 1, specifying the initial placement of Gaussian means
 ## rs - random seed to allow reproducibility
+##
+## Not exported
 mixEM <- function( v, chName, mu_init, rs=100 )
 {
     set.seed(rs)
@@ -35,28 +39,36 @@ mixEM <- function( v, chName, mu_init, rs=100 )
 
 ## Given a model returned by mixEM(), computes posterior probabilities
 ##   for column vals in data frame .df
+##
+## Not exported
 mutate_probs <- function( .df, vals, mix )
 {
     ## Ensure the means are ordered
     stopifnot( mix$mu[1] < mix$mu[2] )
-    s <- ensym(vals)
+    s <- rlang::ensym(vals)
 
     ## Adjust the values based on quantile limits
     ## Compute posterior probabilities of each value landing in negative and positive clusters
-    .df %>% arrange(!!s) %>%
-        mutate( AdjVal = (!!s - mix$lo)/(mix$hi - mix$lo),
-               CN = mix$lambda[1]*dnorm(AdjVal, mix$mu[1], mix$sigma[1]),
-               CP = mix$lambda[2]*dnorm(AdjVal, mix$mu[2], mix$sigma[2]),
-               Prob = singleAct(CP/(CP+CN)) )
+    .df %>% dplyr::arrange(!!s) %>%
+        dplyr::mutate( AdjVal = (!!s - mix$lo)/(mix$hi - mix$lo),
+                      CN = mix$lambda[1]*dnorm(AdjVal, mix$mu[1], mix$sigma[1]),
+                      CP = mix$lambda[2]*dnorm(AdjVal, mix$mu[2], mix$sigma[2]),
+                      Prob = singleAct(CP/(CP+CN)) )
 }
 
-## Fit a Gaussian model to a set of channels
-## X - matrix of marker expression
-## cid - column that contains cell IDs
-## ... - columns to fit a GMM to
-## qq - value between 0 and 0.5. For each channel, the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
-## mu_init - vector of two values, each between 0 and 1, specifying the initial placement of Gaussian means
-## seed - random seed to allow for reproducibility
+#' Fit a Gaussian model to a set of channels
+#' 
+#' @param X - cell-by-channel data frame of marker expression
+#' @param cid - column name or index that contains cell IDs
+#' @param ... - columns to fit a GMM to
+#' @param qq - [optional] value between 0 and 0.5. For each channel,
+#'             the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
+#'             This allows to exclude outliers from model fitting.
+#' @param mu_init - [optional] vector of two values, each between 0 and 1,
+#'                  specifying the initial placement of Gaussian means.
+#' @param seed - random seed to allow for reproducibility
+#' @return A composite data frame containing trained GMMs and their fits to data
+#' @export
 GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
 {
     ## Argument verification
@@ -95,11 +107,14 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
             dplyr::mutate( Values = purrr::map2(Values, GMM, fmp) )
 }
 
-## Reshapes a GMMfit() dataframe to the original cell-by-marker
-## DF - data frame produced by GMMfit()
-GMMreshape <- function(DF)
+#' Reshapes a GMMfit() dataframe to the original cell-by-marker format
+#' 
+#' @param .df - data frame produced by GMMfit()
+#' @return A data frame in the original cell-by-marker format
+#' @export
+GMMreshape <- function(.df)
 {
-    DF %>% dplyr::select( -GMM ) %>% tidyr::unnest() %>%
+    .df %>% dplyr::select( -GMM ) %>% tidyr::unnest() %>%
         dplyr::select( -Value, -AdjVal, -CN, -CP ) %>%
             tidyr::spread( Marker, Prob )
 }
