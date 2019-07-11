@@ -163,7 +163,7 @@ Res <- taskPostProb( exprPostProb, CellId, M, task )
 The final output contains log of posterior probability for each class in the classification task, as well as the final argmax call for each cell. Note that no call is made, when all posterior probabilities are zero:
 
 ``` r
-Res %>% filter( is.na(Call) )
+filter( Res, is.na(Call) )
 # # A tibble: 120 x 5
 #    CellId Immune Stroma Tumor Call 
 #     <dbl>  <dbl>  <dbl> <dbl> <chr>
