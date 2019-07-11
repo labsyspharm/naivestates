@@ -2,4 +2,5 @@
 
 export(GMMfit)
 export(GMMreshape)
+export(plotFit)
 export(taskPostProb)

@@ -103,7 +103,7 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     X %>% dplyr::select( !!rlang::enquo(cid), G$Marker ) %>%
         tidyr::gather( Marker, Value, -1 ) %>%
             tidyr::nest( -Marker, .key="Values" ) %>%
-            dplyr::inner_join(G) %>%
+            dplyr::inner_join(G, by="Marker") %>%
             dplyr::mutate( Values = purrr::map2(Values, GMM, fmp) )
 }
 
