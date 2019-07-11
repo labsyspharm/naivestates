@@ -54,23 +54,77 @@ M <- read_csv( fnMap, col_types=cols() )
 #  3 Cell_25546ONSMA      Stroma     
 #  4 Cell_25546ONVIMENTIN Stroma     
 #  5 Cell_25546ONVIMENTIN Mesenchymal
-#  6 Cell_25546ONCD4      Immune     
-#  7 Cell_25546ONCD4      T-hlp      
-#  8 Cell_25546ONCD4      T-reg      
-#  9 Cell_25546ONCD3      Immune     
-# 10 Cell_25546ONCD8      Immune     
-# 11 Cell_25546ONCD8      T-ctx      
-# 12 Cell_25546ONCD45RO   Immune     
-# 13 Cell_25546ONFOXP3    Immune     
-# 14 Cell_25546ONFOXP3    T-reg      
-# 15 Cell_25546ONPD1      Immune     
-# 16 Cell_25546ONECAD     Epithelial 
-# 17 Cell_25546ONCATENIN  Tumor      
-# 18 Cell_25546ONKERATIN  Epithelial 
-# 19 Cell_25546ONCD45     Immune     
+# ...
 ```
 
 There are several important points to highlight:
 1. When composing your own marker-cell type relationships, ensure that the resulting data frame has column names `Channel` and `Class`.
 2. Not every channel present in the dataset needs to have a mapping.
 3. The same channel may map to multiple classes. For example, VIMENTIN is mapped to Stroma and Mesenchymal classes in the example above.
+
+## Fitting Gaussian Mixture Models
+
+The model fitting is performed by `GMMfit()`, which requires a cell-by-channel data frame, the name (or index) of the column containing Cell IDs, and the list of columns that we want to fit a GMM to. The Cell IDs are used internally to keep track of individual cells. The function returns a data frame that contains the GMM for each (requested) channel as well as the posterior probabilities of whether a given marker is expressed in a given cell:
+
+``` r
+Fits <- GMMfit( X, CellId, M$Channel )
+# # A tibble: 14 x 3
+#    Marker               Values                GMM             
+#    <chr>                <list>                <list>          
+#  1 Cell_25546ONCATENIN  <tibble [10,000 × 6]> <named list [5]>
+#  2 Cell_25546ONCD3      <tibble [10,000 × 6]> <named list [5]>
+#  3 Cell_25546ONCD4      <tibble [10,000 × 6]> <named list [5]>
+# ...
+```
+
+The function also accepts three optional parameters:
+* `qq` - which controls inter-quantile range that the model is fit to. This is useful for removing outliers. By default, the model is fit to the [0.001, 0.999] quantile range of each channel.
+* `mu_init` - the initial placement of means for the Gaussian mixture, which can be used to guide the underlying EM algorithm. The values are specified relative to the inter-quantile range and default to 0.2 and 0.8.
+* `seed` - random seed that allows for full reproducibility of the output
+
+We can inspect the resulting models by hand. For example, here's the first model on the list, which is associated with beta-catenin:
+
+``` r
+Fits$GMM[[1]]
+# $lambda
+# [1] 0.2825191 0.7174809
+# 
+# $mu
+# [1] 0.1330592 0.5376005
+# 
+# $sigma
+# [1] 0.04271679 0.15267999
+# 
+# $lo
+#     0.1% 
+# 7.207441 
+# 
+# $hi
+#    99.9% 
+# 10.04373 
+```
+
+The model consists on the mixture coefficients (lambda), mean placement inside the inter-quantile range (mu) and the associated standard deviations, and the inter-quantile range boundaries in the original expression space.
+
+We can also inspect the posterior probabilities (e.g., `Fits$Values[[1]]`), but it may be more desirable to reshape the data frame to the original cell-by-marker format. This can be done by using `GMMreshape()`:
+
+``` r
+PostProb <- GMMreshape( Fits )
+# # A tibble: 10,000 x 15
+#    CellId Cell_25546ONCAT… Cell_25546ONCD3 Cell_25546ONCD4 Cell_25546ONCD45
+#     <dbl>            <dbl>           <dbl>           <dbl>            <dbl>
+#  1    173           0.997           0.0696           0.935            0.110
+#  2    235           0.0251          0.307            0.935            0.166
+#  3    345           0.0235          0.0698           0.935            0.110
+#  4    350           1               0.0750           0.935            0.110
+#  5    378           1               0.0880           0.935            0.137
+#  6    392           0.0257          0.0696           0.823            0.110
+#  7    400           0.0191          0.0858           0.922            0.112
+#  8    457           1               0.334            0.935            0.246
+#  9    582           0.973           0.806            0.935            0.992
+# 10    671           1               0.442            0.935            0.199
+# # … with 9,990 more rows, and 10 more variables: Cell_25546ONCD45RO <dbl>,
+# #   Cell_25546ONCD8 <dbl>, Cell_25546ONECAD <dbl>, Cell_25546ONFOXP3 <dbl>,
+# #   Cell_25546ONKERATIN <dbl>, Cell_25546ONMITF <dbl>, Cell_25546ONPD1 <dbl>,
+# #   Cell_25546ONS100 <dbl>, Cell_25546ONSMA <dbl>, Cell_25546ONVIMENTIN <dbl>
+```
