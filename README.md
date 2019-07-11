@@ -106,7 +106,15 @@ Fits$GMM[[1]]
 
 The model consists on the mixture coefficients (lambda), mean placement inside the inter-quantile range (mu) and the associated standard deviations, and the inter-quantile range boundaries in the original expression space.
 
-We can also inspect the posterior probabilities (e.g., `Fits$Values[[1]]`), but it may be more desirable to reshape the data frame to the original cell-by-marker format. This can be done by using `GMMreshape()`:
+We can also inspect the posterior probabilities (e.g., `Fits$Values[[1]]`) by hand, but it is usually better to plot the fit. The package provides a function that works directly with the data frame returned by `GMMfit()`. For example, let's examine the GMM fit for beta-catenin:
+
+``` r
+plotFit( Fits, "Cell_25546ONCATENIN" )
+```
+
+![](docs/Fig1.png)
+
+Lastly, it may be desirable to reshape the data frame to the original cell-by-marker format. This can be done by using `GMMreshape()`:
 
 ``` r
 exprPostProb <- GMMreshape( Fits )
