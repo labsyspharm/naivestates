@@ -109,7 +109,7 @@ The model consists on the mixture coefficients (lambda), mean placement inside t
 We can also inspect the posterior probabilities (e.g., `Fits$Values[[1]]`), but it may be more desirable to reshape the data frame to the original cell-by-marker format. This can be done by using `GMMreshape()`:
 
 ``` r
-PostProb <- GMMreshape( Fits )
+exprPostProb <- GMMreshape( Fits )
 # # A tibble: 10,000 x 15
 #    CellId Cell_25546ONCAT… Cell_25546ONCD3 Cell_25546ONCD4 Cell_25546ONCD45
 #     <dbl>            <dbl>           <dbl>           <dbl>            <dbl>
@@ -127,4 +127,42 @@ PostProb <- GMMreshape( Fits )
 # #   Cell_25546ONCD8 <dbl>, Cell_25546ONECAD <dbl>, Cell_25546ONFOXP3 <dbl>,
 # #   Cell_25546ONKERATIN <dbl>, Cell_25546ONMITF <dbl>, Cell_25546ONPD1 <dbl>,
 # #   Cell_25546ONS100 <dbl>, Cell_25546ONSMA <dbl>, Cell_25546ONVIMENTIN <dbl>
+```
+
+## Inferring cell type / state
+
+The posterior probabilities of marker expression can now be combined in a Naive Bayes fashion to produce the final cell type/state calls. First, we define the classification task of interest. For example, we might be interested in distinguishing immune, tumor and stromal cells:
+
+``` r
+task <- c("Immune", "Tumor", "Stroma")
+```
+
+The channel expression probabilities can now be passed to `taskPostProb()` along with a channel -> class mapping and the name of a column that contains cell IDs:
+
+``` r
+Res <- taskPostProb( exprPostProb, CellId, M, task )
+# # A tibble: 10,000 x 5
+#    CellId Immune  Stroma Tumor Call  
+#     <dbl>  <dbl>   <dbl> <dbl> <chr> 
+#  1    173  -31.9  -16.1  -17.4 Stroma
+#  2    235  -24.7  -10.9  -18.0 Stroma
+#  3    345  -28.6  -10.4  -25.6 Stroma
+#  4    350 -Inf   -Inf    -23.4 Tumor 
+#  5    378 -Inf   -Inf    -22.9 Tumor 
+# # … with 9,995 more rows
+```
+
+The final output contains log of posterior probability for each class in the classification task, as well as the final argmax call for each cell. Note that no call is made, when all posterior probabilities are zero:
+
+``` r
+Res %>% filter( is.na(Call) )
+# # A tibble: 120 x 5
+#    CellId Immune Stroma Tumor Call 
+#     <dbl>  <dbl>  <dbl> <dbl> <chr>
+#  1  30109   -Inf   -Inf  -Inf NA   
+#  2  31651   -Inf   -Inf  -Inf NA   
+#  3  35768   -Inf   -Inf  -Inf NA   
+#  4  36805   -Inf   -Inf  -Inf NA   
+#  5  36954   -Inf   -Inf  -Inf NA   
+# # … with 115 more rows
 ```
