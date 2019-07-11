@@ -34,7 +34,7 @@ plotFit <- function( FT, marker )
     
     gg2 <- ggplot2::ggplot( X1, aes(x=Value, y=Prob) ) +
         ggplot2::geom_line(lwd=1.1) + ggplot2::theme_bw() +
-        ggplot2::bold_theme() + ggplot2::ylab( "P( Expressed )" ) + 
+        bold_theme() + ggplot2::ylab( "P( Expressed )" ) + 
         ggplot2::scale_y_continuous( breaks = seq(0,1,by=0.2), limits=c(0,1) ) +
         ggplot2::facet_wrap( ~"Posterior Probability of Expression" )
     gridExtra::grid.arrange( gg1, gg2, nrow=2 )
