@@ -41,7 +41,7 @@ After loading the .csv file, `X` now contains a cell-by-feature data frame consi
 
 The Naive Bayes framework requires predefined mapping of channels/markers to cell types/states. Currently, the framework assumes a binary association between the two (e.g., Immune cells express CD45, Stroma cells express SMA, etc.) As these relationships become more refined, future development will include support for probabilistic assignment of markers to cell types.
 
-The package includes an example mapping to along with the dataset above. As with the data itself, the mapping can be loaded into R or inspected directly by other tools and programming languages.
+The package includes an example mapping to go along with the dataset above. As with the data itself, the mapping can be loaded into R or inspected directly by other tools and programming languages.
 
 ``` r
 fnMap <- system.file( "examples/example1_chnlmap.csv", package="naivestates" )
@@ -82,7 +82,7 @@ The function also accepts three optional parameters:
 * `mu_init` - the initial placement of means for the Gaussian mixture, which can be used to guide the underlying EM algorithm. The values are specified relative to the inter-quantile range and default to 0.2 and 0.8.
 * `seed` - random seed that allows for full reproducibility of the output
 
-We can inspect the resulting models by hand. For example, here's the first model on the list, which is associated with beta-catenin:
+We can inspect the resulting models by hand. For example, here's the first model in the list, which is associated with beta-catenin:
 
 ``` r
 Fits$GMM[[1]]
@@ -106,13 +106,15 @@ Fits$GMM[[1]]
 
 The model consists on the mixture coefficients (lambda), mean placement inside the inter-quantile range (mu) and the associated standard deviations, and the inter-quantile range boundaries in the original expression space.
 
-We can also inspect the posterior probabilities (e.g., `Fits$Values[[1]]`) by hand, but it is usually better to plot the fit. The package provides a function that works directly with the data frame returned by `GMMfit()`. For example, let's examine the GMM fit for beta-catenin:
+We can also inspect the posterior probabilities (e.g., `Fits$Values[[1]]`) by hand, but it is usually better to plot the fit. The package provides a function that works directly with the data frame returned by `GMMfit()`. For example, let's examine the fit for beta-catenin:
 
 ``` r
 plotFit( Fits, "Cell_25546ONCATENIN" )
 ```
 
 ![](docs/Fig1.png)
+
+The top panel shows the distribution of raw expression values after they have been mapped to the inter-quantile range (black), the fit of the positive-expression Gaussian (red) and the matching fit of the negative-expression Gaussian (blue). The bottom panel is the matching posterior probability of the marker being expressed, given the original (unmapped) value.
 
 Lastly, it may be desirable to reshape the data frame to the original cell-by-marker format. This can be done by using `GMMreshape()`:
 

@@ -7,5 +7,6 @@ License: MIT
 Depends: R (>= 3.1.0)
 Imports:
     tidyverse,
-    mixtools
+    mixtools,
+    egg
 RoxygenNote: 6.1.1
