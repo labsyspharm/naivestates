@@ -5,7 +5,7 @@
 The package can be installed directly from GitHub with the following commands:
 ``` r
 if( !require(devtools) ) install.packages("devtools")
-devtools::install_github( "ArtemSokolov/naivestates" )
+devtools::install_github( "labsyspharm/naivestates" )
 ```
 
 Once installed, the package can be loaded using the standard `library()` interface. In the remainder of this introduction, we will also make use of several `tidyverse` functions.
