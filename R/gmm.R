@@ -75,9 +75,14 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     if( qq < 0 | qq > 0.5 ) stop( "qq argument must be in [0, .5] range" )
     if( any(mu_init < 0) | any(mu_init > 1) )
         stop( "mu_init argument values must be in [0, 1] range" )
+
+    ## Handle factor arguments
+    wmsg <- "Factor argument detected. Coercing to character."
+    ch <- purrr::map_if( rlang::list2(...), is.factor,
+                        function(x) {warning(wmsg); as.character(x)} )
     
     ## Isolate the marker values of interest
-    MV <- X %>% tidyr::gather( Marker, Values, ... ) %>%
+    MV <- X %>% tidyr::gather( Marker, Values, !!!ch ) %>%
         dplyr::select( Marker, Values ) %>%
         dplyr::group_by( Marker ) %>% dplyr::summarize_at("Values",list)
     
