@@ -1,5 +1,9 @@
 # naivestates - Inference of cell states using Naive Bayes
 
+This work is supported by *NIH Grant 1U54CA225088: Systems Pharmacology of Therapeutic and Adverse Responses to Immune Checkpoint and Small Molecule Drugs* and by *NCI grant 1U2CCA233262: Pre-cancer atlases of cutaneous and hematologic origin (PATCH Center)*.
+
+**Contributors:** Artem Sokolov
+
 ## Installation
 
 The package can be installed directly from GitHub with the following commands:
