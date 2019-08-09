@@ -153,23 +153,24 @@ Fits <- bind_rows( Fits, F2 )                           # Append the rows from F
 Lastly, it may be desirable to reshape the data frame to the original cell-by-marker format. This can be done by using `GMMreshape()`:
 
 ``` r
-# A tibble: 10,000 x 15
-   CellId Cell_25546ONCAT… Cell_25546ONCD3 Cell_25546ONCD4 Cell_25546ONCD45
-    <dbl>            <dbl>           <dbl>           <dbl>            <dbl>
- 1    173           0.997           0.0696           0.935          0.0110 
- 2    235           0.0251          0.307            0.935          0.288  
- 3    345           0.0235          0.0698           0.935          0.00204
- 4    350           1               0.0750           0.935          0.0238 
- 5    378           1               0.0880           0.935          0.156  
- 6    392           0.0257          0.0696           0.823          0.00213
- 7    400           0.0191          0.0858           0.922          0.0329 
- 8    457           1               0.334            0.935          0.546  
- 9    582           0.973           0.806            0.935          0.970  
-10    671           1               0.442            0.935          0.411  
-# … with 9,990 more rows, and 10 more variables: Cell_25546ONCD45RO <dbl>,
-#   Cell_25546ONCD8 <dbl>, Cell_25546ONECAD <dbl>, Cell_25546ONFOXP3 <dbl>,
-#   Cell_25546ONKERATIN <dbl>, Cell_25546ONMITF <dbl>, Cell_25546ONPD1 <dbl>,
-#   Cell_25546ONS100 <dbl>, Cell_25546ONSMA <dbl>, Cell_25546ONVIMENTIN <dbl>
+exprPostProb <- GMMreshape( Fits )
+# # A tibble: 10,000 x 15
+#    CellId Cell_25546ONCAT… Cell_25546ONCD3 Cell_25546ONCD4 Cell_25546ONCD45
+#     <dbl>            <dbl>           <dbl>           <dbl>            <dbl>
+#  1    173           0.997           0.0696           0.935          0.0110 
+#  2    235           0.0251          0.307            0.935          0.288  
+#  3    345           0.0235          0.0698           0.935          0.00204
+#  4    350           1               0.0750           0.935          0.0238 
+#  5    378           1               0.0880           0.935          0.156  
+#  6    392           0.0257          0.0696           0.823          0.00213
+#  7    400           0.0191          0.0858           0.922          0.0329 
+#  8    457           1               0.334            0.935          0.546  
+#  9    582           0.973           0.806            0.935          0.970  
+# 10    671           1               0.442            0.935          0.411  
+# # … with 9,990 more rows, and 10 more variables: Cell_25546ONCD45RO <dbl>,
+# #   Cell_25546ONCD8 <dbl>, Cell_25546ONECAD <dbl>, Cell_25546ONFOXP3 <dbl>,
+# #   Cell_25546ONKERATIN <dbl>, Cell_25546ONMITF <dbl>, Cell_25546ONPD1 <dbl>,
+# #   Cell_25546ONS100 <dbl>, Cell_25546ONSMA <dbl>, Cell_25546ONVIMENTIN <dbl>
 ```
 
 ## Inferring cell type / state
@@ -184,20 +185,20 @@ The channel expression probabilities can now be passed to `taskPostProb()` along
 
 ``` r
 Res <- taskPostProb( exprPostProb, CellId, M, task )
-# A tibble: 10,000 x 5
-   CellId Immune  Stroma Tumor Call  
-    <dbl>  <dbl>   <dbl> <dbl> <chr> 
- 1    173  -34.2  -16.0  -17.3 Stroma
- 2    235  -24.2  -11.0  -18.2 Stroma
- 3    345  -32.6  -10.3  -25.5 Stroma
- 4    350 -Inf   -Inf    -23.3 Tumor 
- 5    378 -Inf   -Inf    -22.9 Tumor 
- 6    392  -32.5   -9.27 -29.8 Stroma
- 7    400  -27.6  -10.1  -30.5 Stroma
- 8    457 -Inf   -Inf    -21.3 Tumor 
- 9    582  -15.0  -19.5  -23.4 Immune
-10    671 -Inf   -Inf    -28.3 Tumor 
-# … with 9,990 more rows
+# # A tibble: 10,000 x 5
+#    CellId Immune  Stroma Tumor Call  
+#     <dbl>  <dbl>   <dbl> <dbl> <chr> 
+#  1    173  -34.2  -16.0  -17.3 Stroma
+#  2    235  -24.2  -11.0  -18.2 Stroma
+#  3    345  -32.6  -10.3  -25.5 Stroma
+#  4    350 -Inf   -Inf    -23.3 Tumor 
+#  5    378 -Inf   -Inf    -22.9 Tumor 
+#  6    392  -32.5   -9.27 -29.8 Stroma
+#  7    400  -27.6  -10.1  -30.5 Stroma
+#  8    457 -Inf   -Inf    -21.3 Tumor 
+#  9    582  -15.0  -19.5  -23.4 Immune
+# 10    671 -Inf   -Inf    -28.3 Tumor 
+# # … with 9,990 more rows
 ```
 
 The final output contains log of posterior probability for each class in the classification task, as well as the final argmax call for each cell. Note that no call is made, when all posterior probabilities are zero:
