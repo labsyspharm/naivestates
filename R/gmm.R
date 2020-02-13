@@ -18,6 +18,17 @@ singleAct <- function( v )
     v
 }
 
+## Linear rescale of a vector to the [lo, hi] range
+rescaleLin <- function( v, lo, hi )
+{
+    vadj <- (v-lo) / (hi-lo)
+    vfin <- vadj[ is.finite(vadj) ]
+    dplyr::case_when(
+               vadj == -Inf ~ min(vfin),
+               vadj == Inf ~ max(vfin),
+               TRUE ~ vadj )
+}
+
 ## Fits a two-component mixture model to the provided 1-D vector
 ## v - vector of values
 ## chName - name of the channel (for reporting only)
@@ -50,7 +61,7 @@ mutate_probs <- function( .df, vals, mix )
     ## Adjust the values based on quantile limits
     ## Compute posterior probabilities of each value landing in negative and positive clusters
     .df %>% dplyr::arrange(!!s) %>%
-        dplyr::mutate( AdjVal = (!!s - mix$lo)/(mix$hi - mix$lo),
+        dplyr::mutate( AdjVal = rescaleLin(!!s, mix$lo, mix$hi),
                       CN = mix$lambda[1]*dnorm(AdjVal, mix$mu[1], mix$sigma[1]),
                       CP = mix$lambda[2]*dnorm(AdjVal, mix$mu[2], mix$sigma[2]),
                       Prob = singleAct(CP/(CP+CN)) )
@@ -68,6 +79,7 @@ mutate_probs <- function( .df, vals, mix )
 #'                  specifying the initial placement of Gaussian means.
 #' @param seed - random seed to allow for reproducibility
 #' @return A composite data frame containing trained GMMs and their fits to data
+#' @importFrom magrittr %>%
 #' @export
 GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
 {
@@ -118,6 +130,7 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
 #' 
 #' @param .df - data frame produced by GMMfit()
 #' @return A data frame in the original cell-by-marker format
+#' @importFrom magrittr %>%
 #' @export
 GMMreshape <- function(.df)
 {
