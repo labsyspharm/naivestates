@@ -83,7 +83,7 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     
     ## Isolate the marker values of interest
     MV <- X %>% tidyr::gather( Marker, Values, !!!ch ) %>%
-        dplyr::select( Marker, Values ) %>%
+        dplyr::select( Marker, Values ) %>% dplyr::filter( is.finite(Values) ) %>%
         dplyr::group_by( Marker ) %>% dplyr::summarize_at("Values",list)
     
     ## Verify that the data has been log-normalized
