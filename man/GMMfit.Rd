@@ -13,8 +13,8 @@ GMMfit(X, cid, ..., qq = 0.001, mu_init = c(0.2, 0.8), seed = 100)
 
 \item{...}{- columns to fit a GMM to}
 
-\item{qq}{- [optional] value between 0 and 0.5. For each channel,
-the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
+\item{qq}{- [optional] two values between 0 and 0.5. For each channel,
+the qq[1]^th quantile will be mapped to 0 and (1-qq[2])^th quantile to 1.
 This allows to exclude outliers from model fitting.}
 
 \item{mu_init}{- [optional] vector of two values, each between 0 and 1,
