@@ -18,6 +18,17 @@ singleAct <- function( v )
     v
 }
 
+## Linear rescale of a vector to the [lo, hi] range
+rescaleLin <- function( v, lo, hi )
+{
+    vadj <- (v-lo) / (hi-lo)
+    vfin <- vadj[ is.finite(vadj) ]
+    dplyr::case_when(
+               vadj == -Inf ~ min(vfin),
+               vadj == Inf ~ max(vfin),
+               TRUE ~ vadj )
+}
+
 ## Fits a two-component mixture model to the provided 1-D vector
 ## v - vector of values
 ## chName - name of the channel (for reporting only)
@@ -50,7 +61,7 @@ mutate_probs <- function( .df, vals, mix )
     ## Adjust the values based on quantile limits
     ## Compute posterior probabilities of each value landing in negative and positive clusters
     .df %>% dplyr::arrange(!!s) %>%
-        dplyr::mutate( AdjVal = (!!s - mix$lo)/(mix$hi - mix$lo),
+        dplyr::mutate( AdjVal = rescaleLin(!!s, mix$lo, mix$hi),
                       CN = mix$lambda[1]*dnorm(AdjVal, mix$mu[1], mix$sigma[1]),
                       CP = mix$lambda[2]*dnorm(AdjVal, mix$mu[2], mix$sigma[2]),
                       Prob = singleAct(CP/(CP+CN)) )
@@ -61,18 +72,20 @@ mutate_probs <- function( .df, vals, mix )
 #' @param X - cell-by-channel data frame of marker expression
 #' @param cid - column name or index that contains cell IDs
 #' @param ... - columns to fit a GMM to
-#' @param qq - [optional] value between 0 and 0.5. For each channel,
-#'             the qq^th quantile will be mapped to 0 and (1-qq)^th quantile to 1.
+#' @param qq - [optional] two values between 0 and 0.5. For each channel,
+#'             the qq[1]^th quantile will be mapped to 0 and (1-qq[2])^th quantile to 1.
 #'             This allows to exclude outliers from model fitting.
 #' @param mu_init - [optional] vector of two values, each between 0 and 1,
 #'                  specifying the initial placement of Gaussian means.
 #' @param seed - random seed to allow for reproducibility
 #' @return A composite data frame containing trained GMMs and their fits to data
+#' @importFrom magrittr %>%
 #' @export
 GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
 {
     ## Argument verification
-    if( qq < 0 | qq > 0.5 ) stop( "qq argument must be in [0, .5] range" )
+    qq <- rep_len( qq, 2 )
+    if( any(qq < 0) | any(qq > 0.5) ) stop( "qq argument must be in [0, .5] range" )
     if( any(mu_init < 0) | any(mu_init > 1) )
         stop( "mu_init argument values must be in [0, 1] range" )
 
@@ -83,16 +96,16 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     
     ## Isolate the marker values of interest
     MV <- X %>% tidyr::gather( Marker, Values, !!!ch ) %>%
-        dplyr::select( Marker, Values ) %>%
+        dplyr::select( Marker, Values ) %>% dplyr::filter( is.finite(Values) ) %>%
         dplyr::group_by( Marker ) %>% dplyr::summarize_at("Values",list)
     
     ## Verify that the data has been log-normalized
     if( range(MV$Values)[2] > 1000 )
         warning( "Large values detected. Please ensure the data has been log-normalized." )
 
-    ## Compute qq^th and (1-qq)^th quantiles
+    ## Compute qq[1]^th and (1-qq[2])^th quantiles
     ## Adjust and filter the values accordingly
-    fq <- ~list(lo=quantile(.x, qq), hi=quantile(.x, 1-qq))
+    fq <- ~list(lo=quantile(.x, qq[1]), hi=quantile(.x, 1-qq[2]))
     MVQ <- MV %>% dplyr::mutate( QQ = purrr::map(Values, fq) ) %>%
         dplyr::mutate_at( "Values", map2, .$QQ, ~((.x-.y$lo) / (.y$hi-.y$lo)) ) %>%
         dplyr::mutate_at( "Values", map, keep, ~(.x >= 0 & .x <=1) )
@@ -117,6 +130,7 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
 #' 
 #' @param .df - data frame produced by GMMfit()
 #' @return A data frame in the original cell-by-marker format
+#' @importFrom magrittr %>%
 #' @export
 GMMreshape <- function(.df)
 {
