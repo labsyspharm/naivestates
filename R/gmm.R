@@ -89,15 +89,14 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     if( any(mu_init < 0) | any(mu_init > 1) )
         stop( "mu_init argument values must be in [0, 1] range" )
 
-    ## Handle factor arguments
-    wmsg <- "Factor argument detected. Coercing to character."
-    ch <- purrr::map_if( rlang::list2(...), is.factor,
-                        function(x) {warning(wmsg); as.character(x)} )
-    
-    ## Isolate the marker values of interest
-    MV <- X %>% tidyr::gather( Marker, Values, !!!ch ) %>%
-        dplyr::select( Marker, Values ) %>% dplyr::filter( is.finite(Values) ) %>%
-        dplyr::group_by( Marker ) %>% dplyr::summarize_at("Values",list)
+    ## Select all relevant columns from the original data frame
+    X1 <- X %>% dplyr::select( {{cid}}, ... ) %>%
+        tidyr::gather( Marker, Values, -1 )
+
+    ## Isolate the finite marker values to use for modeling
+    MV <- X1 %>% dplyr::filter( is.finite(Values) ) %>%
+        dplyr::group_by( Marker ) %>%
+        dplyr::summarize_at("Values",list)
     
     ## Verify that the data has been log-normalized
     if( range(MV$Values)[2] > 1000 )
@@ -118,12 +117,11 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     
     ## Compute posterior probabilities on the original data
     fmp <- ~mutate_probs(.x, "Value", .y)
-    cide <- rlang::enquo(cid)
-    X %>% dplyr::select( !!cide, G$Marker ) %>%
-        tidyr::gather( Marker, Value, -1 ) %>%
-            tidyr::nest( Values=c(!!cide, Value) ) %>%
-            dplyr::inner_join(G, by="Marker") %>%
-            dplyr::mutate( Values = purrr::map2(Values, GMM, fmp) )
+    R <- X1 %>% dplyr::rename( Value = Values ) %>%
+        tidyr::nest( Values=c({{cid}}, Value) ) %>%
+        dplyr::inner_join(G, by="Marker") %>%
+        dplyr::mutate( Values = purrr::map2(Values, GMM, fmp) )
+    R
 }
 
 #' Reshapes a GMMfit() dataframe to the original cell-by-marker format
