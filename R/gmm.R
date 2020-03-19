@@ -19,6 +19,8 @@ singleAct <- function( v )
 }
 
 ## Linear rescale of a vector to the [lo, hi] range
+##
+## Not exported
 rescaleLin <- function( v, lo, hi )
 {
     vadj <- (v-lo) / (hi-lo)
@@ -27,6 +29,18 @@ rescaleLin <- function( v, lo, hi )
                vadj == -Inf ~ min(vfin),
                vadj == Inf ~ max(vfin),
                TRUE ~ vadj )
+}
+
+## Automatically finds distribution boundaries that contain most of the data
+##
+## Not exported
+findBounds <- function( .v, baseline=1e-3 )
+{
+    density( .v ) %>% with( tibble(x, y) ) %>%
+        mutate_at( "y", ~.x / max(.x) ) %>%
+        arrange(x) %>% filter( y > baseline ) %>%
+        filter( row_number() %in% c(1,n()) ) %>% pull(x) %>%
+        as.list() %>% set_names(c("lo","hi"))
 }
 
 ## Fits a two-component mixture model to the provided 1-D vector
@@ -72,20 +86,22 @@ mutate_probs <- function( .df, vals, mix )
 #' @param X - cell-by-channel data frame of marker expression
 #' @param cid - column name or index that contains cell IDs
 #' @param ... - columns to fit a GMM to
-#' @param qq - [optional] two values between 0 and 0.5. For each channel,
-#'             the qq[1]^th quantile will be mapped to 0 and (1-qq[2])^th quantile to 1.
-#'             This allows to exclude outliers from model fitting.
+#' @param bounds - [optional] Two values specifying the range of values to be used
+#'             for mixture modeling. This allows for exclusion of outliers from
+#'             model fitting. Calculated automatically, if not provided.
+#' @param baseline - baseline for automatic boundary calculation
 #' @param mu_init - [optional] vector of two values, each between 0 and 1,
 #'                  specifying the initial placement of Gaussian means.
 #' @param seed - random seed to allow for reproducibility
 #' @return A composite data frame containing trained GMMs and their fits to data
 #' @importFrom magrittr %>%
 #' @export
-GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
+GMMfit <- function(X, cid, ..., bounds, baseline=1e-3, mu_init=c(0.2,0.8), seed=100)
 {
     ## Argument verification
-    qq <- rep_len( qq, 2 )
-    if( any(qq < 0) | any(qq > 0.5) ) stop( "qq argument must be in [0, .5] range" )
+    mb <- missing(bounds)
+    if( !mb && length(bounds) != 2 )
+        stop( "bounds must be a vector of two values" )
     if( any(mu_init < 0) | any(mu_init > 1) )
         stop( "mu_init argument values must be in [0, 1] range" )
 
@@ -102,17 +118,18 @@ GMMfit <- function(X, cid, ..., qq=0.001, mu_init=c(0.2,0.8), seed=100)
     if( range(MV$Values)[2] > 1000 )
         warning( "Large values detected. Please ensure the data has been log-normalized." )
 
-    ## Compute qq[1]^th and (1-qq[2])^th quantiles
+    ## Computes distribution bounds, or uses provided values
     ## Adjust and filter the values accordingly
-    fq <- ~list(lo=quantile(.x, qq[1]), hi=quantile(.x, 1-qq[2]))
-    MVQ <- MV %>% dplyr::mutate( QQ = purrr::map(Values, fq) ) %>%
-        dplyr::mutate_at( "Values", map2, .$QQ, ~((.x-.y$lo) / (.y$hi-.y$lo)) ) %>%
+    fb <- ~set_names(`if`( mb, findBounds(.x,baseline), as.list(sort(bounds)) ),
+                     c("lo","hi"))
+    MVQ <- MV %>% dplyr::mutate( Bounds = purrr::map(Values, fb) ) %>%
+        dplyr::mutate_at( "Values", map2, .$Bounds, ~((.x-.y$lo) / (.y$hi-.y$lo)) ) %>%
         dplyr::mutate_at( "Values", map, keep, ~(.x >= 0 & .x <=1) )
     
     ## Fit a mixture of two Gaussians to each marker
     G <- MVQ %>%
         dplyr::mutate( GMM = purrr::map2(Values, Marker, mixEM, mu_init, seed) ) %>%
-        dplyr::mutate_at( "GMM", purrr::map2, .$QQ, c ) %>%
+        dplyr::mutate_at( "GMM", purrr::map2, .$Bounds, c ) %>%
         dplyr::select( Marker, GMM )
     
     ## Compute posterior probabilities on the original data
