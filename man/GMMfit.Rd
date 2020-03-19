@@ -4,7 +4,15 @@
 \alias{GMMfit}
 \title{Fit a Gaussian model to a set of channels}
 \usage{
-GMMfit(X, cid, ..., qq = 0.001, mu_init = c(0.2, 0.8), seed = 100)
+GMMfit(
+  X,
+  cid,
+  ...,
+  bounds,
+  baseline = 0.001,
+  mu_init = c(0.2, 0.8),
+  seed = 100
+)
 }
 \arguments{
 \item{X}{- cell-by-channel data frame of marker expression}
@@ -13,9 +21,11 @@ GMMfit(X, cid, ..., qq = 0.001, mu_init = c(0.2, 0.8), seed = 100)
 
 \item{...}{- columns to fit a GMM to}
 
-\item{qq}{- [optional] two values between 0 and 0.5. For each channel,
-the qq[1]^th quantile will be mapped to 0 and (1-qq[2])^th quantile to 1.
-This allows to exclude outliers from model fitting.}
+\item{bounds}{- [optional] Two values specifying the range of values to be used
+for mixture modeling. This allows for exclusion of outliers from
+model fitting. Calculated automatically, if not provided.}
+
+\item{baseline}{- baseline for automatic boundary calculation}
 
 \item{mu_init}{- [optional] vector of two values, each between 0 and 1,
 specifying the initial placement of Gaussian means.}
