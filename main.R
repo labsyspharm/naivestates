@@ -17,7 +17,7 @@ option_list <- list(
                 help="Column containing cell IDs")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
-print( str(opt) )
+##print( str(opt) )
 
 ## Argument verification
 if( !("in" %in% names(opt)) )
