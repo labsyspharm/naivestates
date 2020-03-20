@@ -17,11 +17,15 @@ option_list <- list(
                 help="Column containing cell IDs")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
-##print( str(opt) )
 
 ## Argument verification
 if( !("in" %in% names(opt)) )
     stop( "Please provide an input file name with -i" )
+
+## Identify the sample name
+sn <- basename( opt[["in"]] ) %>% str_split( "\\." ) %>%
+    pluck( 1, 1 )
+cat( "Inferred sample name:", sn, "\n" )
 
 ## Read the data matrix
 X <- read_csv( opt[["in"]], col_types=cols() )
@@ -41,7 +45,7 @@ iwalk( mrki, ~if(length(.x) == 0)
 GMM <- GMMfit( X, opt$id, !!!mrki, baseline=0.01 )
 
 ## Identify the output location(s)
-fnOut <- file.path( opt$out, "expression_prob.csv" )
+fnOut <- file.path( opt$out, str_c(sn, "_ep.csv") )
 cat( "Saving expression probabilities to", fnOut, "\n")
 GMMreshape(GMM) %>% write_csv( fnOut )
 
@@ -49,8 +53,8 @@ GMMreshape(GMM) %>% write_csv( fnOut )
 if( opt$plots )
 {
     ## Create a separate directory for plots
-    dirPlot <- file.path( opt$out, "plots" )
-    dir.create(dirPlot, showWarnings=FALSE)
+    dirPlot <- file.path( opt$out, "plots", sn )
+    dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
     ## Generate and write out individual plots
     for( i in names(mrki) )
