@@ -23,16 +23,22 @@ if( !("in" %in% names(opt)) )
     stop( "Please provide an input file name with -i" )
 
 ## Identify the sample name
-sn <- basename( opt[["in"]] ) %>% str_split( "\\." ) %>%
+sn <- basename( opt$`in` ) %>% str_split( "\\." ) %>%
     pluck( 1, 1 )
 cat( "Inferred sample name:", sn, "\n" )
 
 ## Read the data matrix
-X <- read_csv( opt[["in"]], col_types=cols() )
+X <- read_csv( opt$`in`, col_types=cols() )
 cat( "Read", nrow(X), "entries\n" )
 
+## Determine if we're working with a file of markers or if
+##   markers are specified as a comma,delimited,list
+mrk <- `if`( file.exists(opt$markers),
+            scan(opt$markers, what=character(), quiet=TRUE),
+            str_split( opt$markers, "," )[[1]] ) %>%
+    set_names() %>% map_chr( str_c, "$" )
+
 ## Identify markers in the matrix
-mrk <- str_split( opt$markers, "," )[[1]] %>% set_names()
 mrki <- map( mrk, grep, colnames(X) )
 
 ## Verify marker uniqueness
@@ -40,6 +46,7 @@ iwalk( mrki, ~if(length(.x) > 1)
                   stop("Marker ", .y, " maps to multiple columns") )
 iwalk( mrki, ~if(length(.x) == 0)
                   stop("Marker ", .y, " is not found in the data") )
+cat( "Found markers:", str_flatten(names(mrki), ", "), "\n" )
 
 ## Fit Gaussian mixture models
 GMM <- GMMfit( X, opt$id, !!!mrki, baseline=0.01 )
