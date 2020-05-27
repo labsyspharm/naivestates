@@ -36,11 +36,11 @@ rescaleLin <- function( v, lo, hi )
 ## Not exported
 findBounds <- function( .v, baseline=1e-3 )
 {
-    density( .v ) %>% with( tibble(x, y) ) %>%
-        mutate_at( "y", ~.x / max(.x) ) %>%
-        arrange(x) %>% filter( y > baseline ) %>%
-        filter( row_number() %in% c(1,n()) ) %>% pull(x) %>%
-        as.list() %>% set_names(c("lo","hi"))
+    density( .v ) %>% with( tibble::tibble(x, y) ) %>%
+        dplyr::mutate_at( "y", ~.x / max(.x) ) %>%
+        dplyr::arrange(x) %>% dplyr::filter( y > baseline ) %>%
+        dplyr::filter( dplyr::row_number() %in% c(1,n()) ) %>%
+        dplyr::pull(x) %>% as.list() %>% rlang::set_names(c("lo","hi"))
 }
 
 ## Fits a two-component mixture model to the provided 1-D vector
