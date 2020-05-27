@@ -4,15 +4,7 @@
 \alias{GMMfit}
 \title{Fit a Gaussian model to a set of channels}
 \usage{
-GMMfit(
-  X,
-  cid,
-  ...,
-  bounds,
-  baseline = 0.001,
-  mu_init = c(0.2, 0.8),
-  seed = 100
-)
+GMMfit(X, cid, ..., bounds, baseline = 0.01, mu_init = c(0.2, 0.8), seed = 100)
 }
 \arguments{
 \item{X}{- cell-by-channel data frame of marker expression}
@@ -25,12 +17,12 @@ GMMfit(
 for mixture modeling. This allows for exclusion of outliers from
 model fitting. Calculated automatically, if not provided.}
 
-\item{baseline}{- baseline for automatic boundary calculation}
+\item{baseline}{- [optional] baseline for automatic boundary calculation}
 
 \item{mu_init}{- [optional] vector of two values, each between 0 and 1,
 specifying the initial placement of Gaussian means.}
 
-\item{seed}{- random seed to allow for reproducibility}
+\item{seed}{- [optional] random seed to allow for reproducibility}
 }
 \value{
 A composite data frame containing trained GMMs and their fits to data
