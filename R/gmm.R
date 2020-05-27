@@ -89,14 +89,14 @@ mutate_probs <- function( .df, vals, mix )
 #' @param bounds - [optional] Two values specifying the range of values to be used
 #'             for mixture modeling. This allows for exclusion of outliers from
 #'             model fitting. Calculated automatically, if not provided.
-#' @param baseline - baseline for automatic boundary calculation
+#' @param baseline - [optional] baseline for automatic boundary calculation
 #' @param mu_init - [optional] vector of two values, each between 0 and 1,
 #'                  specifying the initial placement of Gaussian means.
-#' @param seed - random seed to allow for reproducibility
+#' @param seed - [optional] random seed to allow for reproducibility
 #' @return A composite data frame containing trained GMMs and their fits to data
 #' @importFrom magrittr %>%
 #' @export
-GMMfit <- function(X, cid, ..., bounds, baseline=1e-3, mu_init=c(0.2,0.8), seed=100)
+GMMfit <- function(X, cid, ..., bounds, baseline=0.01, mu_init=c(0.2,0.8), seed=100)
 {
     ## Argument verification
     mb <- missing(bounds)
@@ -109,14 +109,14 @@ GMMfit <- function(X, cid, ..., bounds, baseline=1e-3, mu_init=c(0.2,0.8), seed=
     X1 <- X %>% dplyr::select( {{cid}}, ... ) %>%
         tidyr::gather( Marker, Values, -1 )
 
+    ## Verify that the data has been log-normalized
+    if( range(X1$Values)[2] > 1000 )
+        warning( "Large values detected. Please ensure the data has been log-normalized." )
+
     ## Isolate the finite marker values to use for modeling
     MV <- X1 %>% dplyr::filter( is.finite(Values) ) %>%
         dplyr::group_by( Marker ) %>%
         dplyr::summarize_at("Values",list)
-    
-    ## Verify that the data has been log-normalized
-    if( range(MV$Values)[2] > 1000 )
-        warning( "Large values detected. Please ensure the data has been log-normalized." )
 
     ## Computes distribution bounds, or uses provided values
     ## Adjust and filter the values accordingly

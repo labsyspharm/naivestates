@@ -13,14 +13,18 @@ option_list <- list(
                 help="Markers to model"),
     make_option(c("-p", "--plots"), action="store_true", default=FALSE,
                 help="Generate plots showing the fit"),
-    make_option(c("--id"), type="character", default="CellID",
-                help="Column containing cell IDs")
+    make_option("--id", type="character", default="CellID",
+                help="Column containing cell IDs"),
+    make_option("--log", type="character", default="auto",
+                help="Whether to apply a log transform <yes|no|auto>")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
 ## Argument verification
 if( !("in" %in% names(opt)) )
     stop( "Please provide an input file name with -i" )
+if( !(opt$log %in% c("yes","no","auto")) )
+    stop( "--log must be one of <yes|no|auto>" )
 
 ## Identify the sample name
 sn <- basename( opt$`in` ) %>% str_split( "\\." ) %>%
@@ -38,7 +42,7 @@ if( !(opt$id %in% colnames(X)) )
     i <- grep( tolower(opt$id), tolower(colnames(X)) )
     if( length(i) == 1 )
     {
-        warning( "No such column ", opt$id,
+        warning( "  No such column ", opt$id,
                 "; using ", colnames(X)[i], " instead" )
         opt$id <- colnames(X)[i]
     }
@@ -55,6 +59,7 @@ mrk <- `if`( file.exists(opt$markers),
 
 ## Identify markers in the matrix
 mrki <- map( mrk, grep, colnames(X) )
+mrkv <- unlist(mrki)
 
 ## Verify marker uniqueness
 iwalk( mrki, ~if(length(.x) > 1)
@@ -63,8 +68,16 @@ iwalk( mrki, ~if(length(.x) == 0)
                   stop("Marker ", .y, " is not found in the data") )
 cat( "Found markers:", str_flatten(names(mrki), ", "), "\n" )
 
+## Handle log transformation of the data
+if( opt$log == "yes" ||
+    (opt$log == "auto" && max(X[mrkv]) > 1000) )
+{
+    cat( "Applying a log10 transform\n" )
+    X <- X %>% mutate_at( colnames(X)[mrkv], ~log10(.x+1) )
+}
+
 ## Fit Gaussian mixture models
-GMM <- GMMfit( X, opt$id, !!!mrki, baseline=0.01 )
+GMM <- GMMfit(X, opt$id, !!!mrki)
 
 ## Identify the output location(s)
 fnOut <- file.path( opt$out, str_c(sn, "_ep.csv") )
