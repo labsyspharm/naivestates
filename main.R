@@ -13,7 +13,7 @@ option_list <- list(
                 help="Markers to model"),
     make_option(c("-p", "--plots"), action="store_true", default=FALSE,
                 help="Generate plots showing the fit"),
-    make_option(c("--id"), type="character", default="CellId",
+    make_option(c("--id"), type="character", default="CellID",
                 help="Column containing cell IDs")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -30,6 +30,21 @@ cat( "Inferred sample name:", sn, "\n" )
 ## Read the data matrix
 X <- read_csv( opt$`in`, col_types=cols() )
 cat( "Read", nrow(X), "entries\n" )
+
+## Fix potential capitalization mismatch of --id
+if( !(opt$id %in% colnames(X)) )
+{
+    ## Attempt to find a singular case-insensitive match
+    i <- grep( tolower(opt$id), tolower(colnames(X)) )
+    if( length(i) == 1 )
+    {
+        warning( "No such column ", opt$id,
+                "; using ", colnames(X)[i], " instead" )
+        opt$id <- colnames(X)[i]
+    }
+    else stop( "No such column ", opt$id,
+              "; use --id to specify which column contains cell IDs" )
+}
 
 ## Determine if we're working with a file of markers or if
 ##   markers are specified as a comma,delimited,list
