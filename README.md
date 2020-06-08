@@ -40,7 +40,7 @@ docker pull labsyspharm/naivestates:1.2.0
 docker run --rm labsyspharm/naivestates:1.2.0 /app/main.R -h
 ```
 
-replacing `1.1.0` with the version you are working with. Omit `:1.2.0` entirely if you pulled the latest version above. The flag `--rm` tells Docker to delete the container instance after it finishes displaying the help message.
+replacing `1.2.0` with the version you are working with. Omit `:1.2.0` entirely if you pulled the latest version above. The flag `--rm` tells Docker to delete the container instance after it finishes displaying the help message.
 
 # Basic usage
 
