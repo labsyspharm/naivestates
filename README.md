@@ -99,11 +99,12 @@ docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
   /app/main.R -i /data/myfile.csv -o /data/results -m aSMA,CD45,panCK
 ```
 
+# Alternative execution environments
 ## Running in a Conda environment
 
 If you are working in a computational environment that doesn't support Docker, the repository provides a Conda-based alternative. Ensure that `conda` is installed on your system, then 1) clone this repository, 2) instantiate the conda environment and 3) install the tool.
 
-```
+``` bash
 git clone https://github.com/labsyspharm/naivestates.git
 cd naivestates
 conda env create -f conda.yml
@@ -113,7 +114,36 @@ R -s -e "devtools::install_github('labsyspharm/naivestates')"
 
 The tool can now be used as above by running `main.R`:
 
-```
+``` bash
 ./main.R -h
 ./main.R -i /path/to/datafile.csv -m aSMA,CD45,panCK
+```
+
+## Running as an R package
+
+The tool can also be installed as an R package directly from GitHub:
+
+``` r
+if( !require(devtools) ) install.packages("devtools")
+devtools::install_github( "labsyspharm/naivestates" )
+```
+
+Example usage:
+
+```
+library( tidyverse )
+library( naivestates )
+
+# Load the original data
+X <- read_csv( "datafile.csv" )
+
+# Fit models to channels aSMA, CD45 and panCK
+# Specify that cell IDs are in column CellID
+GMM <- GMMfit( X, CellID, aSMA, CD45, panCK )
+
+# Plot a fit to one of the markers
+plotFit( GMM, "CD45" )
+
+# Write out the results to results.csv
+GMMreshape(GMM) %>% write_csv( "results.csv" )
 ```
