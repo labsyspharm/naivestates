@@ -130,7 +130,7 @@ devtools::install_github( "labsyspharm/naivestates" )
 
 Example usage:
 
-```
+``` r
 library( tidyverse )
 library( naivestates )
 
