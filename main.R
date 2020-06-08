@@ -7,7 +7,7 @@ library( naivestates )
 ## Parse command-line arugments
 option_list <- list(
     make_option(c("-i", "--in"), type="character", help="Input file"),
-    make_option(c("-o", "--out"), type="character", default=".",
+    make_option(c("-o", "--out"), type="character", default="/data",
                 help="Output directory"),
     make_option(c("-m", "--markers"), type="character", default="DNA0",
                 help="Markers to model"),
