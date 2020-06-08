@@ -28,26 +28,26 @@ Pull the latest version with
 docker pull labsyspharm/naivestates
 ```
 
-Alternatively, you can pull a specific version, which is recommended to ensure reproducibility of your analyses. For example, v1.1.0 can be pulled with
+Alternatively, you can pull a specific version, which is recommended to ensure reproducibility of your analyses. For example, v1.2.0 can be pulled with
 
 ```
-docker pull labsyspharm/naivestates:1.1.0
+docker pull labsyspharm/naivestates:1.2.0
 ```
 
 ## Examine the tool usage instructions
 
 ```
-docker run --rm labsyspharm/naivestates:1.1.0 /app/main.R -h
+docker run --rm labsyspharm/naivestates:1.2.0 /app/main.R -h
 ```
 
-replacing `1.1.0` with the version you are working with. Omit `:1.1.0` entirely if you pulled the latest version above. The flag `--rm` tells Docker to delete the container instance after it finishes displaying the help message.
+replacing `1.1.0` with the version you are working with. Omit `:1.2.0` entirely if you pulled the latest version above. The flag `--rm` tells Docker to delete the container instance after it finishes displaying the help message.
 
 # Basic usage
 
 At minimum, the tool requires an input file and the list of marker names:
 
 ```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK
 ```
 
@@ -55,7 +55,7 @@ where we can make a distinction between Docker-level arguments:
 
 * `--rm` once again cleans up the container instance after it finishes running the code
 * `-v /path/to/data/folder:/data` maps the local folder containing your data to `/data` inside the container
-* `:1.1.0` specifies the container version that we pulled above
+* `:1.2.0` specifies the container version that we pulled above
 
 and tool-level arguments:
 
@@ -67,35 +67,35 @@ and tool-level arguments:
 If there is a large number of markers, place their names in a standalone file `markers.txt` with one marker per line. Ensure that the file lives in `/path/to/data/folder/` and modify the Docker call to use the new file:
 
 ```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -m /data/markers.txt
 ```
 
 QC plots of individual marker fits can be generated with `--plots`:
 
 ```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --plots
 ```
 
 By default, the tool assumes that cell IDs reside in a column named `CellID`. Use `--id` to specify an alternative:
 
 ```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --id CellIndex
 ```
 
 Use `--log yes` to have `naivestates` apply a log10 transformation prior to fitting the data. The tool will do this automatically if it detects large values. Use `--log no` to force the use of original, non-transformed values instead:
 
 ```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --log yes
 ```
 
 The output can be written to a different directory with `-o`. (Note that any file written to a directory that wasn't mapped with `docker -v` will not persist when the container is destroyed.)
 
 ```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -o /data/results -m aSMA,CD45,panCK
 ```
 
