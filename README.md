@@ -2,10 +2,25 @@
 
 This work is supported by the *NIH Grant 1U54CA225088: Systems Pharmacology of Therapeutic and Adverse Responses to Immune Checkpoint and Small Molecule Drugs* and by the *NCI grant 1U2CCA233262: Pre-cancer atlases of cutaneous and hematologic origin (PATCH Center)*.
 
-**Contributors:** Artem Sokolov
+# Introduction
 
-# Running as a Docker container
+`naivestates` is a label-free, cluster-free tool for inferring cell types from quantified marker expression data, based on known marker <-> cell type associations. The tool is designed to be run as a Docker container, but can also be installed in a Conda environment or as an R package. `naivestates` expects as input information about marker expression on a per-cell basis, provided in `.csv` format. One of the columns must contain cell IDs. An example input file may look as follows:
 
+```
+CellID,KERATIN,FOXP3,SMA
+1,64.18060200668896,193.00334448160535,303.5016722408027
+2,54.850202429149796,151.19433198380565,176.3846153846154
+3,63.94712643678161,210.43218390804597,483.9448275862069
+4,142.01320132013203,227.85808580858085,420.76897689768975
+5,56.66379310344828,197.01896551724138,343.7810344827586
+6,69.97454545454545,187.59636363636363,267.9709090909091
+7,67.57754010695187,185.63368983957218,351.7914438502674
+8,64.012,190.02,349.348
+9,56.9622641509434,159.79245283018867,236.43867924528303
+...
+```
+
+# Installation
 ## Download the container image
 Pull the latest version with
 
@@ -27,11 +42,13 @@ docker run --rm labsyspharm/naivestates:1.1.0 /app/main.R -h
 
 replacing `1.1.0` with the version you are working with. Omit `:1.1.0` entirely if you pulled the latest version above. The flag `--rm` tells Docker to delete the container instance after it finishes displaying the help message.
 
-## Apply the tool to quantification data that captures cell-level marker expression
+# Basic usage
+
+At minimum, the tool requires an input file and the list of marker names:
 
 ```
 docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
-  /app/main.R -i /data/myfile.csv -o /data -m aSMA,CD45,panCK --plots --log auto --id CellID
+  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK
 ```
 
 where we can make a distinction between Docker-level arguments:
@@ -43,19 +60,42 @@ where we can make a distinction between Docker-level arguments:
 and tool-level arguments:
 
 * `-i /data/myfile.csv` specifies which data file to process
-* `-o /data` tells the tool to write output to `/data` inside the container (recall that this is mapped to `/path/to/data/folder` above)
 * `-m aSMA,CD45,panCK` specifies the markers of interest (NOTE: comma-delimited, no spaces)
-* `--plots` requests the generation of plots showing model fits
-* `--log` can be one of `<yes|no|auto>` (where `auto` is the default), which specifies whether the tool should apply a log10 transformation prior to fitting the data
-* `--id` tells the tool which column contains Cell IDs. If omitted, the tool will look for `CellID`.
 
-### Fitting a large number of markers
+## Additional use cases
 
-If there is a large number of markers, place their names in a standalone file `markers.txt` with one marker per line. Ensure that the file lives in `/path/to/data/folder/` and modify the above Docker call to use the new file:
+If there is a large number of markers, place their names in a standalone file `markers.txt` with one marker per line. Ensure that the file lives in `/path/to/data/folder/` and modify the Docker call to use the new file:
 
 ```
 docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
-  /app/main.R -i /data/myfile.csv -o /data -m /data/markers.txt
+  /app/main.R -i /data/myfile.csv -m /data/markers.txt
 ```
 
-Note that the optional parameters `--plot`, `--log` and `--id` were omitted for clarity.
+QC plots of individual marker fits can be generated with `--plots`:
+
+```
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK
+```
+
+By default, the tool assumes that cell IDs reside in a column named `CellID`. Use `--id` to specify an alternative:
+
+```
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --id CellIndex
+```
+
+Use `--log yes` to have `naivestates` apply a log10 transformation prior to fitting the data. The tool will do this automatically if it detects large values. Use `--log no` to force the use of original, non-transformed values instead:
+
+```
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --log yes
+```
+
+The output can be written to a different directory with `-o`. (Note that any file written to a directory that wasn't mapped with `docker -v` will not persist when the container is destroyed.)
+
+```
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
+  /app/main.R -i /data/myfile.csv -o /data/results -m aSMA,CD45,panCK
+```
+
