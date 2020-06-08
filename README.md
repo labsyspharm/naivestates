@@ -75,7 +75,7 @@ QC plots of individual marker fits can be generated with `--plots`:
 
 ```
 docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
-  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK
+  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --plots
 ```
 
 By default, the tool assumes that cell IDs reside in a column named `CellID`. Use `--id` to specify an alternative:
