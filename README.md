@@ -99,3 +99,21 @@ docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.1.0 \
   /app/main.R -i /data/myfile.csv -o /data/results -m aSMA,CD45,panCK
 ```
 
+## Running in a Conda environment
+
+If you are working in a computational environment that doesn't support Docker, the repository provides a Conda-based alternative. Ensure that `conda` is installed on your system, then 1) clone this repository, 2) instantiate the conda environment and 3) install the tool.
+
+```
+git clone https://github.com/labsyspharm/naivestates.git
+cd naivestates
+conda env create -f conda.yml
+conda activate naivestates
+R -s -e "devtools::install_github('labsyspharm/naivestates')"
+```
+
+The tool can now be used as above by running `main.R`:
+
+```
+./main.R -h
+./main.R -i /path/to/datafile.csv -m aSMA,CD45,panCK
+```
