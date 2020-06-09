@@ -74,7 +74,22 @@ GMM <- GMMfit(X, opt$id, !!!mrkv)
 ## Identify the output location(s)
 fnOut <- file.path( opt$out, str_c(sn, "_probs.csv") )
 cat( "Saving expression probabilities to", fnOut, "\n")
-GMMreshape(GMM) %>% write_csv( fnOut )
+Y <- GMMreshape(GMM)
+Y %>% write_csv( fnOut )
+
+cat( "------\n" )
+
+## Load marker -> cell type associations
+tm <- read_csv( "typemap.csv", col_types=cols() ) %>% deframe()
+mct <- findMarkers( colnames(Y), names(tm) )
+mct <- set_names( tm[names(mct)], mct )
+
+if( length(mct) == 0 ) {
+    warning( "Skipping cell type inference due to missing marker -> cell type mapping" )
+} else {
+    cat( "Using the following marker -> cell type map:\n" )
+    iwalk( mct, ~cat( .y, "->", .x, "\n" ) )
+}
 
 ## Generates plots as necessary
 if( opt$plots )
