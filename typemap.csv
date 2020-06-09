@@ -1,0 +1,10 @@
+Marker,State
+S100,Tumor
+panCK,Tumor
+KERATIN,Tumor
+aSMA,Stroma
+SMA,Stroma
+VIMENTIN,Stroma
+CD45,Immune
+FOXP3,Immune
+CD3,Immune

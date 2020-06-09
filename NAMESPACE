@@ -2,6 +2,7 @@
 
 export(GMMfit)
 export(GMMreshape)
+export(findMarkers)
 export(plotFit)
 export(taskPostProb)
 importFrom(magrittr,"%>%")

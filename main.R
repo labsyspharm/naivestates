@@ -80,7 +80,7 @@ if( opt$log == "yes" ||
 GMM <- GMMfit(X, opt$id, !!!mrki)
 
 ## Identify the output location(s)
-fnOut <- file.path( opt$out, str_c(sn, "_ep.csv") )
+fnOut <- file.path( opt$out, str_c(sn, "_probs.csv") )
 cat( "Saving expression probabilities to", fnOut, "\n")
 GMMreshape(GMM) %>% write_csv( fnOut )
 
