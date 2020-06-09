@@ -54,30 +54,22 @@ if( !(opt$id %in% colnames(X)) )
 ##   markers are specified as a comma,delimited,list
 mrk <- `if`( file.exists(opt$markers),
             scan(opt$markers, what=character(), quiet=TRUE),
-            str_split( opt$markers, "," )[[1]] ) %>%
-    set_names() %>% map_chr( str_c, "$" )
+            str_split( opt$markers, "," )[[1]] )
 
 ## Identify markers in the matrix
-mrki <- map( mrk, grep, colnames(X) )
-mrkv <- unlist(mrki)
-
-## Verify marker uniqueness
-iwalk( mrki, ~if(length(.x) > 1)
-                  stop("Marker ", .y, " maps to multiple columns") )
-iwalk( mrki, ~if(length(.x) == 0)
-                  stop("Marker ", .y, " is not found in the data") )
-cat( "Found markers:", str_flatten(names(mrki), ", "), "\n" )
+mrkv <- findMarkers( colnames(X), mrk, TRUE, TRUE )
+cat( "Found markers:", str_flatten(names(mrkv), ", "), "\n" )
 
 ## Handle log transformation of the data
 if( opt$log == "yes" ||
     (opt$log == "auto" && max(X[mrkv]) > 1000) )
 {
     cat( "Applying a log10 transform\n" )
-    X <- X %>% mutate_at( colnames(X)[mrkv], ~log10(.x+1) )
+    X <- X %>% mutate_at( mrkv, ~log10(.x+1) )
 }
 
 ## Fit Gaussian mixture models
-GMM <- GMMfit(X, opt$id, !!!mrki)
+GMM <- GMMfit(X, opt$id, !!!mrkv)
 
 ## Identify the output location(s)
 fnOut <- file.path( opt$out, str_c(sn, "_probs.csv") )
@@ -92,7 +84,7 @@ if( opt$plots )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
     ## Generate and write out individual plots
-    for( i in names(mrki) )
+    for( i in names(mrkv) )
     {
         gg <- plotFit(GMM, i)
         fn <- file.path( dirPlot, str_c(i,".pdf") )
