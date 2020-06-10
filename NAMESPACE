@@ -2,7 +2,7 @@
 
 export(GMMfit)
 export(GMMreshape)
+export(callStates)
 export(findMarkers)
 export(plotFit)
-export(taskPostProb)
 importFrom(magrittr,"%>%")

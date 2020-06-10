@@ -18,6 +18,8 @@ columns Channel and Class}
 }
 \value{
 (Log) Posterior probability for each cell-class pair
+
+Not exported until further revision
 }
 \description{
 Given a classification tasks, computes posterior probabilities for
