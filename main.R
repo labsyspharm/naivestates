@@ -70,12 +70,7 @@ if( opt$log == "yes" ||
 
 ## Fit Gaussian mixture models
 GMM <- GMMfit(X, opt$id, !!!mrkv)
-
-## Identify the output location(s)
-fnOut <- file.path( opt$out, str_c(sn, "_probs.csv") )
-cat( "Saving expression probabilities to", fnOut, "\n")
 Y <- GMMreshape(GMM)
-Y %>% write_csv( fnOut )
 
 cat( "------\n" )
 
@@ -89,7 +84,15 @@ if( length(mct) == 0 ) {
 } else {
     cat( "Using the following marker -> cell type map:\n" )
     iwalk( mct, ~cat( .y, "->", .x, "\n" ) )
+    Y <- callStates(Y, mct) %>% select( opt$id, State, Anchor, everything() )
 }
+
+cat( "------\n" )
+
+## Identify the output location(s)
+fnOut <- file.path( opt$out, str_c(sn, "_states.csv") )
+cat( "Saving results to", fnOut, "\n")
+Y %>% write_csv( fnOut )
 
 ## Generates plots as necessary
 if( opt$plots )

@@ -89,7 +89,7 @@ callStates <- function( P, tm, pthr = 0.65 )
         dplyr::group_by( tmpID ) %>% dplyr::top_n( 1, Value ) %>%
         dplyr::ungroup() %>% dplyr::arrange( tmpID ) %>%
         dplyr::mutate( State = tm[Anchor] ) %>%
-        dplyr::inner_join( P1 ) %>%
+        dplyr::inner_join( P1, by="tmpID" ) %>%
         dplyr::select( -tmpID, -Value )
 }
 
