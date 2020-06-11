@@ -52,6 +52,8 @@ option_list <- list(
                 help="Markers to model"),
     make_option(c("-p", "--plots"), action="store_true", default=FALSE,
                 help="Generate plots showing the fit"),
+    make_option("--mct", type="character", default="/app/typemap.csv",
+                help="Marker -> cell type map in .csv format"),
     make_option("--id", type="character", default="CellID",
                 help="Column containing cell IDs"),
     make_option("--log", type="character", default="auto",
@@ -118,7 +120,7 @@ Y <- GMMreshape(GMM)
 cat( "------\n" )
 
 ## Load marker -> cell type associations
-tm <- read_csv( "typemap.csv", col_types=cols() ) %>% deframe()
+tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
 mct <- findMarkers( colnames(Y), names(tm) )
 mct <- set_names( tm[names(mct)], mct )
 
@@ -146,7 +148,6 @@ if( opt$plots )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
     ## Generate and write a summary plot
-    source( "umap.R" )
     gg <- plotSummary(Y)
     fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.pdf") )
     suppressMessages(ggsave( fn, gg, width=9, height=7 ))
