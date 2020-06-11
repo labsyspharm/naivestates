@@ -36,3 +36,19 @@ findMarkers <- function(v, mrk, errOnNotFound=FALSE, errOnNonUnique=FALSE)
     purrr::map_chr( mrki, ~v[.x] )
 }
 
+#' Automatically finds markers by removing blacklisted items from a vector of names
+#'
+#' @param v vector of names
+#' @return A subset of v that is not blacklisted
+#' @export
+autoMarker <- function( v )
+{
+    omit <- c("AF488", "AF555", "AF647", "A488", "A555", "A647", "DNA",
+              "X_position", "Y_position",
+              "X_centroid", "Y_centroid", "column_centroid", "row_centroid", 
+              "Area", "MajorAxisLength", "MinorAxisLength", "Eccentricity", 
+              "Solidity", "Extent", "Orientation")
+
+    j <- purrr::map( omit, grep, v ) %>% unlist
+    v[setdiff( 1:length(v), j )]
+}
