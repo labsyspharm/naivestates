@@ -9,7 +9,7 @@ option_list <- list(
     make_option(c("-i", "--in"), type="character", help="Input file"),
     make_option(c("-o", "--out"), type="character", default="/data",
                 help="Output directory"),
-    make_option(c("-m", "--markers"), type="character", default="DNA0",
+    make_option(c("-m", "--markers"), type="character", default="auto",
                 help="Markers to model"),
     make_option(c("-p", "--plots"), action="store_true", default=FALSE,
                 help="Generate plots showing the fit"),
@@ -52,9 +52,13 @@ if( !(opt$id %in% colnames(X)) )
 
 ## Determine if we're working with a file of markers or if
 ##   markers are specified as a comma,delimited,list
-mrk <- `if`( file.exists(opt$markers),
-            scan(opt$markers, what=character(), quiet=TRUE),
-            str_split( opt$markers, "," )[[1]] )
+if( file.exists(opt$markers) ) {
+    mrk <- scan(opt$markers, what=character(), quiet=TRUE)
+} else if( opt$markers == "auto" ) {
+    mrk <- autoMarkers(setdiff(colnames(X), opt$id))
+} else {
+    mrk <- str_split( opt$markers, "," )[[1]]
+}
 
 ## Identify markers in the matrix
 mrkv <- findMarkers( colnames(X), mrk, TRUE, TRUE )
@@ -80,11 +84,12 @@ mct <- findMarkers( colnames(Y), names(tm) )
 mct <- set_names( tm[names(mct)], mct )
 
 if( length(mct) == 0 ) {
-    warning( "Skipping cell type inference due to missing marker -> cell type mapping" )
+    warning( "No usable marker -> cell type mappings detected" )
+    Y <- callStates(Y, opt$id)
 } else {
     cat( "Using the following marker -> cell type map:\n" )
     iwalk( mct, ~cat( .y, "->", .x, "\n" ) )
-    Y <- callStates(Y, mct) %>% select( opt$id, State, Anchor, everything() )
+    Y <- callStates(Y, opt$id, mct)
 }
 
 cat( "------\n" )
@@ -105,7 +110,7 @@ if( opt$plots )
     source( "umap.R" )
     gg <- plotSummary(Y)
     fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.pdf") )
-    suppressMessages(ggsave( fn, gg ))
+    suppressMessages(ggsave( fn, gg, width=9, height=7 ))
     cat( "Wrote summary to", fn, "\n" )
 
     ## Generate and write out plots for individual marker fits
