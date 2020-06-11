@@ -8,6 +8,5 @@ Depends: R (>= 3.1.0)
 Imports:
     tidyverse,
     mixtools,
-    egg,
-    optparse
+    egg
 RoxygenNote: 7.1.0
