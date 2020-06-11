@@ -90,7 +90,7 @@ if( length(mct) == 0 ) {
 cat( "------\n" )
 
 ## Identify the output location(s)
-fnOut <- file.path( opt$out, str_c(sn, "_states.csv") )
+fnOut <- file.path( opt$out, str_c(sn, "-states.csv") )
 cat( "Saving results to", fnOut, "\n")
 Y %>% write_csv( fnOut )
 
@@ -101,12 +101,19 @@ if( opt$plots )
     dirPlot <- file.path( opt$out, "plots", sn )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
-    ## Generate and write out individual plots
+    ## Generate and write a summary plot
+    source( "umap.R" )
+    gg <- plotSummary(Y)
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.pdf") )
+    suppressMessages(ggsave( fn, gg ))
+    cat( "Wrote summary to", fn, "\n" )
+
+    ## Generate and write out plots for individual marker fits
     for( i in names(mrkv) )
     {
         gg <- plotFit(GMM, i)
         fn <- file.path( dirPlot, str_c(i,".pdf") )
-        ggsave( fn, gg )
+        suppressMessages(ggsave( fn, gg ))
         cat( "Wrote", fn, "\n" )
     }
 }
