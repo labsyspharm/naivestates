@@ -41,7 +41,7 @@ findMarkers <- function(v, mrk, errOnNotFound=FALSE, errOnNonUnique=FALSE)
 #' @param v vector of names
 #' @return A subset of v that is not blacklisted
 #' @export
-autoMarker <- function( v )
+autoMarkers <- function( v )
 {
     omit <- c("AF488", "AF555", "AF647", "A488", "A555", "A647", "DNA",
               "X_position", "Y_position",
