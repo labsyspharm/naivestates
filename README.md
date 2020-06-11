@@ -99,6 +99,13 @@ docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -o /data/results -m aSMA,CD45,panCK
 ```
 
+The tool has a basic marker -> cell type (mct) mapping in `typemap.csv`. More sophisticated mct mappings can be defined by creating a `custom-map.csv` file with two columns: `Marker` and `State`. Ensure that `custom-map.csv` is in `/path/to/data/folder` and point the tool at it with `--mct`:
+
+```
+docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
+  /app/main.R -i /data/myfile.csv --mct /data/custom-map.csv -m aSMA,CD45,panCK
+```
+
 # Alternative execution environments
 ## Running in a Conda environment
 
