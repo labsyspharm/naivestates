@@ -4,18 +4,6 @@ suppressMessages( library(tidyverse) )
 library( optparse )
 library( naivestates )
 
-## Generates a palette for a vector cell type labels
-makePal <- function( v )
-{
-    pal <- c("Medium", "Dark", "Light") %>%
-        map( ggthemes::few_pal ) %>%
-        map( ~.(8) ) %>% unlist
-    
-    v1 <- setdiff( v, "Other (None)" )
-    set_names( pal[1:length(v1)], v1 ) %>%
-        c( "Other (None)" = "gray" )
-}
-
 ## A UMAP plot summarizing cell state calls
 plotSummary <- function( Y )
 {

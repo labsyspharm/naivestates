@@ -77,6 +77,7 @@ taskPostProb <- function( .df, cid, chMap, vTask )
 #' @param tm (optional) vector mapping marker -> cell type
 #' @param pthr probability threshold above which a cell is considered to express the marker
 #' @return The original frame P augmented with cell state and achor marker information
+#' @importFrom magrittr %>%
 #' @export
 callStates <- function( P, cid, tm, pthr = 0.65 )
 {
