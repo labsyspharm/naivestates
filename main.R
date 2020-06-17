@@ -17,7 +17,7 @@ option_list <- list(
                 help="Output directory"),
     make_option(c("-m", "--markers"), type="character", default="auto",
                 help="Markers to model"),
-    make_option(c("-p", "--plots"), action="store_true", default=FALSE,
+    make_option(c("-p", "--plots"), type="character", default="off",
                 help="Generate plots showing the fit"),
     make_option("--mct", type="character", default="",
                 help="Marker -> cell type map in .csv format"),
@@ -33,6 +33,8 @@ if( !("in" %in% names(opt)) )
     stop( "Please provide an input file name with -i" )
 if( !(opt$log %in% c("yes","no","auto")) )
     stop( "--log must be one of <yes|no|auto>" )
+if( !(opt$plots %in% c("off", "pdf", "png")) )
+    stop( "--plots must be one of <off|pdf|png>" )
 
 ## Find the default cell type map
 if( opt$mct == "" )
@@ -113,24 +115,25 @@ cat( "Saving results to", fnOut, "\n")
 Y %>% write_csv( fnOut )
 
 ## Generates plots as necessary
-if( opt$plots )
+if( opt$plots != "off" )
 {
     ## Create a separate directory for plots
     dirPlot <- file.path( opt$out, "plots", sn )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
     ## Compute a UMAP projection
+    cat( "Computing a UMAP projection...\n" )
     U <- umap( Y, c(opt$id, "State", "Anchor") )
     
     ## Generate and write a summary plot
     gg <- plotSummary( U )
-    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.pdf") )
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.", opt$plots) )
     suppressMessages(ggsave( fn, gg, width=9, height=7 ))
     cat( "Plotted summary to", fn, "\n" )
 
     ## Generate and write faceted probabilities plot
     gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
-    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.pdf") )
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.", opt$plots) )
     suppressMessages(ggsave( fn, gg, width=9, height=7 ))
     cat( "Plotted probabilities to", fn, "\n" )
 
@@ -138,7 +141,7 @@ if( opt$plots )
     for( i in names(mrkv) )
     {
         gg <- plotFit(GMM, i)
-        fn <- file.path( dirPlot, str_c(i,".pdf") )
+        fn <- file.path( dirPlot, str_c(i,".",opt$plots) )
         suppressMessages(ggsave( fn, gg ))
         cat( "Wrote", fn, "\n" )
     }
