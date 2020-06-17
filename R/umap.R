@@ -54,4 +54,25 @@ plotSummary <- function( U )
             ggplot2::theme_bw() + ggplot2::geom_point(color="gray")
 }
 
+#' Faceted UMAP plot showing probabilities of individual markers
+#' @param U data frame produced by umap()
+#' @param excl character vector of column names to exclude from plotting
+#' @return ggplot object of the faceted plot
+#' @importFrom magrittr %>%
+#' @export
+plotProbs <- function( U, excl )
+{
+    trm <- intersect( excl, colnames(U) )
+    Z <- U %>% dplyr::select( -dplyr::one_of(trm) ) %>%
+        tidyr::gather( Marker, Probability, -UMAP1, -UMAP2 )
+
+    nmrk <- length( unique(Z$Marker) )
+    
+    ggplot2::ggplot( Z, ggplot2::aes(UMAP1, UMAP2, color=Probability) ) +
+        ggplot2::geom_point(size=0.5) + ggplot2::theme_void() +
+        ggplot2::facet_wrap( ~Marker, ncol=round(sqrt(nmrk)) ) +
+        ggplot2::scale_color_gradient2(midpoint=0.5,
+                                       high=scales::muted("red"),
+                                       low=scales::muted("blue"))
+}
 

@@ -126,7 +126,13 @@ if( opt$plots )
     gg <- plotSummary( U )
     fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.pdf") )
     suppressMessages(ggsave( fn, gg, width=9, height=7 ))
-    cat( "Wrote summary to", fn, "\n" )
+    cat( "Plotted summary to", fn, "\n" )
+
+    ## Generate and write faceted probabilities plot
+    gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.pdf") )
+    suppressMessages(ggsave( fn, gg, width=9, height=7 ))
+    cat( "Plotted probabilities to", fn, "\n" )
 
     ## Generate and write out plots for individual marker fits
     for( i in names(mrkv) )
