@@ -4,6 +4,12 @@ suppressMessages( library(tidyverse) )
 library( optparse )
 library( naivestates )
 
+## Identify directory of the script
+wd <- commandArgs( trailingOnly=FALSE ) %>%
+    keep( ~grepl("--file=", .x) ) %>%
+    str_replace( "--file=", "" ) %>% dirname()
+cat( "Running the script from", wd, "\n" )
+
 ## Parse command-line arugments
 option_list <- list(
     make_option(c("-i", "--in"), type="character", help="Input file"),
@@ -13,7 +19,7 @@ option_list <- list(
                 help="Markers to model"),
     make_option(c("-p", "--plots"), action="store_true", default=FALSE,
                 help="Generate plots showing the fit"),
-    make_option("--mct", type="character", default="/app/typemap.csv",
+    make_option("--mct", type="character", default="",
                 help="Marker -> cell type map in .csv format"),
     make_option("--id", type="character", default="CellID",
                 help="Column containing cell IDs"),
@@ -27,6 +33,10 @@ if( !("in" %in% names(opt)) )
     stop( "Please provide an input file name with -i" )
 if( !(opt$log %in% c("yes","no","auto")) )
     stop( "--log must be one of <yes|no|auto>" )
+
+## Find the default cell type map
+if( opt$mct == "" )
+    opt$mct <- file.path( wd, "typemap.csv" )
 
 ## Identify the sample name
 sn <- basename( opt$`in` ) %>% str_split( "\\." ) %>%
@@ -81,6 +91,7 @@ Y <- GMMreshape(GMM)
 cat( "------\n" )
 
 ## Load marker -> cell type associations
+cat( "Loading cell type map from", opt$mct, "\n" )
 tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
 mct <- findMarkers( colnames(Y), names(tm) )
 mct <- set_names( tm[names(mct)], mct )
