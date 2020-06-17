@@ -62,8 +62,6 @@ and tool-level arguments:
 * `-i /data/myfile.csv` specifies which data file to process
 * `-m aSMA,CD45,panCK` specifies the markers of interest (NOTE: comma-delimited, no spaces)
 
-## Additional use cases
-
 If there is a large number of markers, place their names in a standalone file `markers.txt` with one marker per line. Ensure that the file lives in `/path/to/data/folder/` and modify the Docker call to use the new file:
 
 ```
@@ -71,40 +69,15 @@ docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
   /app/main.R -i /data/myfile.csv -m /data/markers.txt
 ```
 
-QC plots of individual marker fits can be generated with `--plots`:
+## Additional parameters
 
-```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
-  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --plots
-```
+The following parameters are optional, but may be useful in certain scenarios:
 
-By default, the tool assumes that cell IDs reside in a column named `CellID`. Use `--id` to specify an alternative:
-
-```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
-  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --id CellIndex
-```
-
-Use `--log yes` to have `naivestates` apply a log10 transformation prior to fitting the data. The tool will do this automatically if it detects large values. Use `--log no` to force the use of original, non-transformed values instead:
-
-```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
-  /app/main.R -i /data/myfile.csv -m aSMA,CD45,panCK --log yes
-```
-
-The output can be written to a different directory with `-o`. (Note that any file written to a directory that wasn't mapped with `docker -v` will not persist when the container is destroyed.)
-
-```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
-  /app/main.R -i /data/myfile.csv -o /data/results -m aSMA,CD45,panCK
-```
-
-The tool has a basic marker -> cell type (mct) mapping in `typemap.csv`. More sophisticated mct mappings can be defined by creating a `custom-map.csv` file with two columns: `Marker` and `State`. Ensure that `custom-map.csv` is in `/path/to/data/folder` and point the tool at it with `--mct`:
-
-```
-docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
-  /app/main.R -i /data/myfile.csv --mct /data/custom-map.csv -m aSMA,CD45,panCK
-```
+* `--plots <off|pdf|png>` - (default: `off`) Produces QC plots of individual marker fits and summary UMAP plots in .png or .pdf format.
+* `--id` - (default: `CellID`) Name of the column that contains cell IDs
+* `--log <yes|no|auto>` - (default: `auto`) When a log10 transformation should be applied prior to fitting the data. The tool will do this automatically if it detects large values. Use `--log no` to force the use of original, non-transformed values instead.
+* `-o` - (default: `/data`) Alternative output directory. (Note that any file written to a directory that wasn't mapped with `docker -v` will not persist when the container is destroyed.)
+* `--mct` - The tool has a basic marker -> cell type (mct) mapping in `typemap.csv`. More sophisticated mct mappings can be defined by creating a `custom-map.csv` file with two columns: `Marker` and `State`. Ensure that `custom-map.csv` is in `/path/to/data/folder` and point the tool at it with `--mct` (e.g., `/app/main.R -i /data/myfile.csv --mct /data/custom-map.csv -m aSMA,CD45,panCK`)
 
 # Alternative execution environments
 ## Running in a Conda environment
