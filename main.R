@@ -4,44 +4,11 @@ suppressMessages( library(tidyverse) )
 library( optparse )
 library( naivestates )
 
-## Generates a palette for a vector cell type labels
-makePal <- function( v )
-{
-    pal <- c("Medium", "Dark", "Light") %>%
-        map( ggthemes::few_pal ) %>%
-        map( ~.(8) ) %>% unlist
-    
-    v1 <- setdiff( v, "Other (None)" )
-    set_names( pal[1:length(v1)], v1 ) %>%
-        c( "Other (None)" = "gray" )
-}
-
-## A UMAP plot summarizing cell state calls
-plotSummary <- function( Y )
-{
-    cat( "Computing UMAP projection...\n" )
-    
-    ## Compute a UMAP projection of the data
-    trm <- intersect( c(opt$id, "State", "Anchor"), colnames(Y) )
-    U <- Y %>% select( -one_of(trm) ) %>% uwot::umap() %>%
-        as.data.frame() %>% rename_all( str_replace, "V", "UMAP" ) %>%
-        mutate_all( ~(.x - min(.x))/(max(.x) - min(.x)) )
-
-    ## Augment the original data
-    Z <- bind_cols(Y, U)
-
-    ## Color by cell state calls (if any)
-    if( "State" %in% colnames(Z) ) {
-        Z <- Z %>% mutate( Label = str_c(State, " (", Anchor, ")") )
-        pal <- makePal( Z$Label )
-
-        ## Plot UMAP projection, coloring by cell state calls
-        ggplot( Z, aes(UMAP1, UMAP2, color=Label) ) +
-            geom_point() + theme_bw() +
-            scale_color_manual( values=pal, name="Cell State Call\n(Dominant Marker)" )
-    } else
-        ggplot( Z, aes(UMAP1, UMAP2) ) + theme_bw() + geom_point(color="gray")
-}
+## Identify directory of the script
+wd <- commandArgs( trailingOnly=FALSE ) %>%
+    keep( ~grepl("--file=", .x) ) %>%
+    str_replace( "--file=", "" ) %>% dirname()
+cat( "Running the script from", wd, "\n" )
 
 ## Parse command-line arugments
 option_list <- list(
@@ -50,9 +17,9 @@ option_list <- list(
                 help="Output directory"),
     make_option(c("-m", "--markers"), type="character", default="auto",
                 help="Markers to model"),
-    make_option(c("-p", "--plots"), action="store_true", default=FALSE,
+    make_option(c("-p", "--plots"), type="character", default="off",
                 help="Generate plots showing the fit"),
-    make_option("--mct", type="character", default="/app/typemap.csv",
+    make_option("--mct", type="character", default="",
                 help="Marker -> cell type map in .csv format"),
     make_option("--id", type="character", default="CellID",
                 help="Column containing cell IDs"),
@@ -66,6 +33,12 @@ if( !("in" %in% names(opt)) )
     stop( "Please provide an input file name with -i" )
 if( !(opt$log %in% c("yes","no","auto")) )
     stop( "--log must be one of <yes|no|auto>" )
+if( !(opt$plots %in% c("off", "pdf", "png")) )
+    stop( "--plots must be one of <off|pdf|png>" )
+
+## Find the default cell type map
+if( opt$mct == "" )
+    opt$mct <- file.path( wd, "typemap.csv" )
 
 ## Identify the sample name
 sn <- basename( opt$`in` ) %>% str_split( "\\." ) %>%
@@ -120,6 +93,7 @@ Y <- GMMreshape(GMM)
 cat( "------\n" )
 
 ## Load marker -> cell type associations
+cat( "Loading cell type map from", opt$mct, "\n" )
 tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
 mct <- findMarkers( colnames(Y), names(tm) )
 mct <- set_names( tm[names(mct)], mct )
@@ -141,23 +115,33 @@ cat( "Saving results to", fnOut, "\n")
 Y %>% write_csv( fnOut )
 
 ## Generates plots as necessary
-if( opt$plots )
+if( opt$plots != "off" )
 {
     ## Create a separate directory for plots
     dirPlot <- file.path( opt$out, "plots", sn )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
+    ## Compute a UMAP projection
+    cat( "Computing a UMAP projection...\n" )
+    U <- umap( Y, c(opt$id, "State", "Anchor") )
+    
     ## Generate and write a summary plot
-    gg <- plotSummary(Y)
-    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.pdf") )
+    gg <- plotSummary( U )
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.", opt$plots) )
     suppressMessages(ggsave( fn, gg, width=9, height=7 ))
-    cat( "Wrote summary to", fn, "\n" )
+    cat( "Plotted summary to", fn, "\n" )
+
+    ## Generate and write faceted probabilities plot
+    gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.", opt$plots) )
+    suppressMessages(ggsave( fn, gg, width=9, height=7 ))
+    cat( "Plotted probabilities to", fn, "\n" )
 
     ## Generate and write out plots for individual marker fits
     for( i in names(mrkv) )
     {
         gg <- plotFit(GMM, i)
-        fn <- file.path( dirPlot, str_c(i,".pdf") )
+        fn <- file.path( dirPlot, str_c(i,".",opt$plots) )
         suppressMessages(ggsave( fn, gg ))
         cat( "Wrote", fn, "\n" )
     }
