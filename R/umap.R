@@ -24,7 +24,7 @@ makePal <- function( v )
 #' @export
 umap <- function( X, excl )
 {
-    trm <- intersect( excl, colnames(Y) )
+    trm <- intersect( excl, colnames(X) )
     U <- X %>% dplyr::select( -dplyr::one_of(trm) ) %>% uwot::umap() %>%
         as.data.frame() %>% dplyr::rename_all( stringr::str_replace, "V", "UMAP" ) %>%
         dplyr::mutate_all( ~(.x - min(.x))/(max(.x) - min(.x)) )
@@ -41,7 +41,7 @@ plotSummary <- function( U )
     if( all(v) && length(unique(U$Anchor)) <= 24 )
     {
         U <- dplyr::mutate( U, Label = stringr::str_c(State, " (", Anchor, ")") )
-        pal <- makePal( Z$Label )
+        pal <- makePal( U$Label )
         
         ## Plot UMAP projection, coloring by cell state calls
         ggplot2::ggplot( U, ggplot2::aes(UMAP1, UMAP2, color=Label) ) +
