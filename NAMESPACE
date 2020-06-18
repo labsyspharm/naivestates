@@ -3,6 +3,7 @@
 export(GMMfit)
 export(GMMreshape)
 export(autoMarkers)
+export(autoSuffix)
 export(callStates)
 export(findMarkers)
 export(plotFit)
