@@ -24,7 +24,9 @@ option_list <- list(
     make_option("--id", type="character", default="CellID",
                 help="Column containing cell IDs"),
     make_option("--log", type="character", default="auto",
-                help="Whether to apply a log transform <yes|no|auto>")
+                help="Whether to apply a log transform <yes|no|auto>"),
+    make_option("--sfx", type="character", default="",
+                help="Common suffix on marker columns (e.g., _cellMask)")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -64,26 +66,36 @@ if( !(opt$id %in% colnames(X)) )
               "; use --id to specify which column contains cell IDs" )
 }
 
+## Determine the suffix in the available data columns (if not specified)
+if( opt$sfx == "" )
+    opt$sfx <- setdiff(colnames(X), opt$id) %>% autoMarkers %>% autoSuffix
+
 ## Determine if we're working with a file of markers or if
 ##   markers are specified as a comma,delimited,list
 if( file.exists(opt$markers) ) {
     mrk <- scan(opt$markers, what=character(), quiet=TRUE)
 } else if( opt$markers == "auto" ) {
     mrk <- autoMarkers(setdiff(colnames(X), opt$id))
+    if( opt$sfx != "$" ) mrk <- keep( mrk, ~grepl(opt$sfx, .x) )
 } else {
     mrk <- str_split( opt$markers, "," )[[1]]
 }
 
+## Remove the suffix if it's already present in the requested names
+##   since findMarkers() will append it
+mrk <- str_replace( mrk, opt$sfx, "" )
+
 ## Identify markers in the matrix
-mrkv <- findMarkers( colnames(X), mrk, TRUE, TRUE )
+cat( "Looking for markers", str_flatten(mrk, ", "), "with suffix", opt$sfx, "\n" )
+mrkv <- findMarkers( colnames(X), mrk, opt$sfx, TRUE, TRUE )
 cat( "Found markers:", str_flatten(names(mrkv), ", "), "\n" )
 
 ## Handle log transformation of the data
 if( opt$log == "yes" ||
-    (opt$log == "auto" && max(X[mrkv]) > 1000) )
+    (opt$log == "auto" && max(X[mrkv], na.rm=TRUE) > 1000) )
 {
     cat( "Applying a log10 transform\n" )
-    X <- X %>% mutate_at( mrkv, ~log10(.x+1) )
+    X <- X %>% mutate_at( unname(mrkv), ~log10(.x+1) )
 }
 
 ## Fit Gaussian mixture models

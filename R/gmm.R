@@ -74,13 +74,15 @@ mutate_probs <- function( .df, vals, mix )
 
     ## Adjust the values based on quantile limits
     ## Compute posterior probabilities of each value landing in negative and positive clusters
+    ## NAs arising due to CP+CN == 0 are filled, NAs in column !!s are then restored
     .df %>% dplyr::arrange(!!s) %>%
         dplyr::mutate( AdjVal = rescaleLin(!!s, mix$lo, mix$hi),
                       CN = mix$lambda[1]*dnorm(AdjVal, mix$mu[1], mix$sigma[1]),
                       CP = mix$lambda[2]*dnorm(AdjVal, mix$mu[2], mix$sigma[2]),
                       Prob = tidyr::replace_na(CP/(CP+CN), NA) ) %>%     # NaN -> NA for fill()
-        tidyr::fill( Prob, .direction="downup" ) %>%
-        dplyr::mutate( Prob = singleAct(Prob) )
+            tidyr::fill( Prob, .direction="downup" ) %>%
+            dplyr::mutate( Prob = singleAct(Prob) ) %>%
+            dplyr::mutate( Prob = ifelse(is.na(!!s), NA, Prob) )   # Restore original NAs
 }
 
 #' Fit a Gaussian model to a set of channels
