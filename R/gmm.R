@@ -112,7 +112,7 @@ GMMfit <- function(X, cid, ..., bounds, baseline=0.01, mu_init=c(0.2,0.8), seed=
         tidyr::gather( Marker, Values, -1 )
 
     ## Verify that the data has been log-normalized
-    if( range(X1$Values)[2] > 1000 )
+    if( range(X1$Values, na.rm=TRUE)[2] > 1000 )
         warning( "Large values detected. Please ensure the data has been log-normalized." )
 
     ## Isolate the finite marker values to use for modeling

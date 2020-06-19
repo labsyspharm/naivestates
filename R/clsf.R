@@ -93,8 +93,11 @@ callStates <- function( P, cid, tm, pthr = 0.65 )
         dplyr::mutate( None = pthr ) %>%
         dplyr::select( tmpID, names(tm) ) %>%
         tidyr::gather( Anchor, Value, names(tm) ) %>%
-        dplyr::group_by( tmpID ) %>% dplyr::top_n( 1, Value ) %>%
-        dplyr::ungroup() %>% dplyr::arrange( tmpID ) %>%
+        dplyr::group_by( tmpID ) %>%
+        dplyr::arrange( dplyr::desc(Value) ) %>%
+        dplyr::slice(1) %>%
+        dplyr::ungroup() %>%
+        dplyr::arrange( tmpID ) %>%
         dplyr::mutate( State = tm[Anchor] ) %>%
         dplyr::inner_join( P1, by="tmpID" ) %>%
         dplyr::select( -tmpID, -Value ) %>%
