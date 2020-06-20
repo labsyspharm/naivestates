@@ -25,10 +25,10 @@ makePal <- function( v )
 umap <- function( X, excl )
 {
     trm <- intersect( excl, colnames(X) )
-    U <- X %>% dplyr::select( -dplyr::one_of(trm) ) %>% uwot::umap() %>%
+    U <- na.omit(X) %>% dplyr::select( -dplyr::one_of(trm) ) %>% uwot::umap() %>%
         as.data.frame() %>% dplyr::rename_all( stringr::str_replace, "V", "UMAP" ) %>%
         dplyr::mutate_all( ~(.x - min(.x))/(max(.x) - min(.x)) )
-    dplyr::bind_cols(X, U)
+    dplyr::bind_cols(na.omit(X), U)
 }
 
 #' Summary UMAP plot with points colored by cell type (dominant label)

@@ -4,12 +4,14 @@
 \alias{findMarkers}
 \title{Finds markers among a vector of names}
 \usage{
-findMarkers(v, mrk, errOnNotFound = FALSE, errOnNonUnique = FALSE)
+findMarkers(v, mrk, sfx = "$", errOnNotFound = FALSE, errOnNonUnique = FALSE)
 }
 \arguments{
 \item{v}{- vector of names to examine}
 
 \item{mrk}{- vector of markers to search for}
+
+\item{sfx}{- common suffix on all marker columns}
 
 \item{errOnNotFound}{- what to do when a requested marker is not found:
 TRUE - throw an error; FALSE (default) - exclude from results}
