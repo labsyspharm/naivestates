@@ -46,6 +46,32 @@ plotMarker <- function( FT, marker, plotFit=TRUE, plotMap=TRUE )
     egg::ggarrange( gg1, gg2, nrow=2 )
 }
 
+#' Plots an overview of all fits
+#'
+#' @param FT - the data frame returned by GMMfit()
+#' @param npt - downsample to this many points (default: 100,000)
+#' @importFrom magrittr %>%
+#' @return a faceted ggplot object showing a fit to every marker
+#' @export
+plotFitOverview <- function( FT, npt=100000 )
+{
+    ## Downsample only if the number of points exceeds the request
+    vs <- 1:nrow(FT[[1]])
+    if( length(vs) > npt ) vs <- sample(vs, npt)
+
+    X <- FT %>% dplyr::mutate_at( "Values", map, slice, vs ) %>%
+        dplyr::select( Marker, Values ) %>% tidyver::unnest( Values ) %>%
+        dplyr::filter( AdjVal >= 0, AdjVal <= 1 )
+    ggplot2::ggplot( X, ggplot2::aes(x=AdjVal) ) +
+        ggplot2::theme_bw() + bold_theme() +
+            ggplot2::ylab( "Density" ) +
+            ggplot2::xlab( "Normalized Expression" ) +
+            ggplot2::geom_density(lwd=1.1) +
+            ggplot2::facet_wrap( ~Marker, scales="free_y" ) + 
+            ggplot2::geom_line( ggplot2::aes(y=CP), color="red", lwd=1.1 ) +
+            ggplot2::geom_line( ggplot2::aes(y=CN), color="blue", lwd=1.1 )
+}
+
 #' Summary UMAP plot with points colored by cell type (dominant label)
 #' @param U data frame produced by umap()
 #' @return ggplot object encapsulating the plot
