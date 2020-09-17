@@ -26,7 +26,9 @@ option_list <- list(
     make_option("--log", type="character", default="auto",
                 help="Whether to apply a log transform <yes|no|auto>"),
     make_option("--sfx", type="character", default="",
-                help="Common suffix on marker columns (e.g., _cellMask)")
+                help="Common suffix on marker columns (e.g., _cellMask)"),
+    make_option("--umap", action="store_true", default=FALSE,
+                help="Generate UMAP plots")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -37,10 +39,6 @@ if( !(opt$log %in% c("yes","no","auto")) )
     stop( "--log must be one of <yes|no|auto>" )
 if( !(opt$plots %in% c("off", "pdf", "png")) )
     stop( "--plots must be one of <off|pdf|png>" )
-
-## Find the default cell type map
-if( opt$mct == "" )
-    opt$mct <- file.path( wd, "typemap.csv" )
 
 ## Identify the sample name
 sn <- basename( opt$`in` ) %>% str_split( "\\." ) %>%
@@ -104,19 +102,26 @@ Y <- GMMreshape(GMM)
 
 cat( "------\n" )
 
-## Load marker -> cell type associations
-cat( "Loading cell type map from", opt$mct, "\n" )
-tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
-mct <- findMarkers( colnames(Y), names(tm) )
-mct <- set_names( tm[names(mct)], mct )
+## Find the default cell type map
+if( opt$mct != "" ) {
 
-if( length(mct) == 0 ) {
-    warning( "No usable marker -> cell type mappings detected" )
-    Y <- callStates(Y, opt$id)
+    ## Load marker -> cell type associations
+    cat( "Loading cell type map from", opt$mct, "\n" )
+    tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
+    mct <- findMarkers( colnames(Y), names(tm) )
+    mct <- set_names( tm[names(mct)], mct )
+
+    if( length(mct) == 0 ) {
+        warning( "No usable marker -> cell type mappings detected" )
+        Y <- callStates(Y, opt$id)
+    } else {
+        cat( "Using the following marker -> cell type map:\n" )
+        iwalk( mct, ~cat( .y, "->", .x, "\n" ) )
+        Y <- callStates(Y, opt$id, mct)
+    }
 } else {
-    cat( "Using the following marker -> cell type map:\n" )
-    iwalk( mct, ~cat( .y, "->", .x, "\n" ) )
-    Y <- callStates(Y, opt$id, mct)
+    cat( "No marker -> cell type mapping provided" )
+    Y <- callStates(Y, opt$id)
 }
 
 cat( "------\n" )
@@ -134,20 +139,22 @@ if( opt$plots != "off" )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
     ## Compute a UMAP projection
-    cat( "Computing a UMAP projection...\n" )
-    U <- umap( Y, c(opt$id, "State", "Anchor") )
+    if( opts$umap ) {
+        cat( "Computing a UMAP projection...\n" )
+        U <- umap( Y, c(opt$id, "State", "Anchor") )
     
-    ## Generate and write a summary plot
-    gg <- plotSummary( U )
-    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.", opt$plots) )
-    suppressMessages(ggsave( fn, gg, width=9, height=7 ))
-    cat( "Plotted summary to", fn, "\n" )
+        ## Generate and write a summary plot
+        gg <- plotSummary( U )
+        fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-summary.", opt$plots) )
+        suppressMessages(ggsave( fn, gg, width=9, height=7 ))
+        cat( "Plotted summary to", fn, "\n" )
 
-    ## Generate and write faceted probabilities plot
-    gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
-    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.", opt$plots) )
-    suppressMessages(ggsave( fn, gg, width=9, height=7 ))
-    cat( "Plotted probabilities to", fn, "\n" )
+        ## Generate and write faceted probabilities plot
+        gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
+        fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.", opt$plots) )
+        suppressMessages(ggsave( fn, gg, width=9, height=7 ))
+        cat( "Plotted probabilities to", fn, "\n" )
+    }
 
     ## Generate and write out plots for individual marker fits
     for( i in names(mrkv) )

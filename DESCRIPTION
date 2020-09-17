@@ -1,6 +1,6 @@
 Package: naivestates
 Title: Cell state calling using Naive Bayes
-Version: 1.1.0
+Version: 1.4.0
 Author: Artem Sokolov
 Description: Assignment of predicted cell states to individual cells in a label-free environment.
 License: MIT
