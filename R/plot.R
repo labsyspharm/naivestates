@@ -56,11 +56,11 @@ plotMarker <- function( FT, marker, plotFit=TRUE, plotMap=TRUE )
 plotFitOverview <- function( FT, npt=100000 )
 {
     ## Downsample only if the number of points exceeds the request
-    vs <- 1:nrow(FT[[1]])
+    vs <- 1:nrow(FT$Values[[1]])
     if( length(vs) > npt ) vs <- sample(vs, npt)
 
     X <- FT %>% dplyr::mutate_at( "Values", map, slice, vs ) %>%
-        dplyr::select( Marker, Values ) %>% tidyver::unnest( Values ) %>%
+        dplyr::select( Marker, Values ) %>% tidyr::unnest( Values ) %>%
         dplyr::filter( AdjVal >= 0, AdjVal <= 1 )
     ggplot2::ggplot( X, ggplot2::aes(x=AdjVal) ) +
         ggplot2::theme_bw() + bold_theme() +

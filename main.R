@@ -138,8 +138,13 @@ if( opt$plots != "off" )
     dirPlot <- file.path( opt$out, "plots", sn )
     dir.create(dirPlot, recursive=TRUE, showWarnings=FALSE)
 
+    ## Fit overview
+    fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-allfits.", opt$plots) )
+    ggf <- plotFitOverview(GMM)
+    suppressMessages(ggsave( fn, ggf, width=12, height=8 ))
+    
     ## Compute a UMAP projection
-    if( opts$umap ) {
+    if( opt$umap ) {
         cat( "Computing a UMAP projection...\n" )
         U <- umap( Y, c(opt$id, "State", "Anchor") )
     
