@@ -113,6 +113,7 @@ plotProbs <- function( U, excl )
         ggplot2::geom_point(size=0.5) + ggplot2::theme_void() +
         ggplot2::facet_wrap( ~Marker, ncol=round(sqrt(nmrk)) ) +
         ggplot2::scale_color_gradient2(midpoint=0.5,
+                                       limits=c(0,1),
                                        high=scales::muted("red"),
                                        low=scales::muted("blue"))
 }

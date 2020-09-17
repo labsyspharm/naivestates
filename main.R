@@ -120,7 +120,7 @@ if( opt$mct != "" ) {
         Y <- callStates(Y, opt$id, mct)
     }
 } else {
-    cat( "No marker -> cell type mapping provided" )
+    cat( "No marker -> cell type mapping provided\n" )
     Y <- callStates(Y, opt$id)
 }
 
