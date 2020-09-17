@@ -159,7 +159,7 @@ if( opt$plots != "off" )
     ## Generate and write out plots for individual marker fits
     for( i in names(mrkv) )
     {
-        gg <- plotFit(GMM, i)
+        gg <- plotMarker(GMM, i)
         fn <- file.path( dirPlot, str_c(i,".",opt$plots) )
         suppressMessages(ggsave( fn, gg ))
         cat( "Wrote", fn, "\n" )
