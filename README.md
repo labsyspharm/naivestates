@@ -122,7 +122,7 @@ X <- read_csv( "datafile.csv" )
 GMM <- GMMfit( X, CellID, aSMA, CD45, panCK )
 
 # Plot a fit to one of the markers
-plotFit( GMM, "CD45" )
+plotMarker( GMM, "CD45" )
 
 # Write out the results to results.csv
 GMMreshape(GMM) %>% write_csv( "results.csv" )
