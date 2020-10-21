@@ -4,7 +4,14 @@
 \alias{findMarkers}
 \title{Finds markers among a vector of names}
 \usage{
-findMarkers(v, mrk, sfx = "", errOnNotFound = FALSE, errOnNonUnique = FALSE)
+findMarkers(
+  v,
+  mrk,
+  sfx = "",
+  errOnNotFound = FALSE,
+  errOnNonUnique = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{v}{- vector of names to examine}
@@ -19,6 +26,8 @@ TRUE - throw an error; FALSE (default) - exclude from results}
 
 \item{errOnNonUnique}{- what to do when a mapping is not unique:
 TRUE - throw an error; FALSE (default) - return the first match}
+
+\item{verbose}{- whether to display additional messages (default: FALSE)}
 }
 \value{
 A named vector of matches between v and mrk
