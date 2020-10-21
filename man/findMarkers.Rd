@@ -4,12 +4,13 @@
 \alias{findMarkers}
 \title{Finds markers among a vector of names}
 \usage{
-findMarkers(v, mrk, sfx = "$", errOnNotFound = FALSE, errOnNonUnique = FALSE)
+findMarkers(v, mrk, sfx = "", errOnNotFound = FALSE, errOnNonUnique = FALSE)
 }
 \arguments{
 \item{v}{- vector of names to examine}
 
-\item{mrk}{- vector of markers to search for}
+\item{mrk}{- vector of markers to search for, or path to a file containing
+one marker name per line}
 
 \item{sfx}{- common suffix on all marker columns}
 

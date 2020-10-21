@@ -64,29 +64,9 @@ if( !(opt$id %in% colnames(X)) )
               "; use --id to specify which column contains cell IDs" )
 }
 
-## Determine the suffix in the available data columns (if not specified)
-if( opt$sfx == "" )
-    opt$sfx <- setdiff(colnames(X), opt$id) %>% autoMarkers %>% autoSuffix
-
-## Determine if we're working with a file of markers or if
-##   markers are specified as a comma,delimited,list
-if( file.exists(opt$markers) ) {
-    mrk <- scan(opt$markers, what=character(), quiet=TRUE)
-} else if( opt$markers == "auto" ) {
-    mrk <- autoMarkers(setdiff(colnames(X), opt$id))
-    if( opt$sfx != "$" ) mrk <- keep( mrk, ~grepl(opt$sfx, .x) )
-} else {
-    mrk <- str_split( opt$markers, "," )[[1]]
-}
-
-## Remove the suffix if it's already present in the requested names
-##   since findMarkers() will append it
-mrk <- str_replace( mrk, opt$sfx, "" )
-
 ## Identify markers in the matrix
-cat( "Looking for markers", str_flatten(mrk, ", "), "with suffix", opt$sfx, "\n" )
-mrkv <- findMarkers( colnames(X), mrk, opt$sfx, TRUE, TRUE )
-cat( "Found markers:", str_flatten(names(mrkv), ", "), "\n" )
+mrkv <- findMarkers(setdiff(colnames(X), opt$id), opt$markers,
+                    opt$sfx, TRUE, TRUE, TRUE)
 
 ## Handle log transformation of the data
 if( opt$log == "yes" ||
