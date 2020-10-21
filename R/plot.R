@@ -23,26 +23,45 @@ bold_theme <- function()
 #' @export
 plotMarker <- function( FT, marker, plotFit=TRUE, plotMap=TRUE )
 {
+    ## Identify the slice to plot
     X1 <- FT %>% dplyr::filter( Marker == marker ) %>% purrr::pluck("Values",1) %>%
         na.omit() %>% dplyr::filter( AdjVal >= 0, AdjVal <= 1 ) %>% dplyr::arrange(Value)
-    
+
+    ## Identify the matching GMM and the plotting range
+    gmm <- FT %>% dplyr::filter( Marker == marker ) %>% purrr::pluck("GMM", 1)
+    xrng <- seq(gmm$lo, gmm$hi, length.out=5)
+    xtck <- round(xrng, 2)
+
+    ## Density plot
     gg1 <- ggplot2::ggplot( X1, aes(x=AdjVal) ) + ggplot2::theme_bw() +
         bold_theme() +
-        ggplot2::ylab("Density") + ggplot2::xlab("Normalized Expression") +
+        ggplot2::ylab("Density") +
+        ggplot2::xlab("Log-transformed Expression") +
         ggplot2::geom_density(lwd=1.1) +
-        ggplot2::facet_wrap( ~str_c(marker) )
+        ggplot2::facet_wrap( ~str_c(marker) ) +
+        ggplot2::scale_x_continuous(breaks = seq(0,1,by=0.25),
+                                    labels = xtck)
     if( plotFit )
         gg1 <- gg1 +
             ggplot2::geom_line( aes(y=CP), color="red", lwd=1.1 ) +
             ggplot2::geom_line( aes(y=CN), color="blue", lwd=1.1 )
     
     if( !plotMap ) return(gg1)
-    
-    gg2 <- ggplot2::ggplot( X1, aes(x=AdjVal, y=Prob) ) +
+
+    ## Remove duplicated axis information
+    ebl <- ggplot2::element_blank()
+    gg1 <- gg1 +
+        ggplot2::theme(axis.title.x = ebl,
+                       axis.text.x  = ebl,
+                       axis.ticks.x = ebl)
+
+    ## Probability plot
+    gg2 <- ggplot2::ggplot( X1, aes(x=Value, y=Prob) ) +
         ggplot2::geom_line(lwd=1.1) + ggplot2::theme_bw() +
         bold_theme() +
-        ggplot2::ylab( "P( Expressed )" ) + ggplot2::xlab("Normalized Expression") +
-        ggplot2::scale_y_continuous( breaks = seq(0,1,by=0.2), limits=c(0,1) )
+        ggplot2::ylab( "P( Expressed )" ) + ggplot2::xlab("Log-transformed Expression") +
+        ggplot2::scale_y_continuous( breaks = seq(0,1,by=0.2), limits=c(0,1) ) +
+        ggplot2::scale_x_continuous( breaks = xrng, labels = xtck )
     egg::ggarrange( gg1, gg2, nrow=2 )
 }
 

@@ -4,12 +4,20 @@
 \alias{findMarkers}
 \title{Finds markers among a vector of names}
 \usage{
-findMarkers(v, mrk, sfx = "$", errOnNotFound = FALSE, errOnNonUnique = FALSE)
+findMarkers(
+  v,
+  mrk,
+  sfx = "",
+  errOnNotFound = FALSE,
+  errOnNonUnique = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{v}{- vector of names to examine}
 
-\item{mrk}{- vector of markers to search for}
+\item{mrk}{- vector of markers to search for, or path to a file containing
+one marker name per line}
 
 \item{sfx}{- common suffix on all marker columns}
 
@@ -18,6 +26,8 @@ TRUE - throw an error; FALSE (default) - exclude from results}
 
 \item{errOnNonUnique}{- what to do when a mapping is not unique:
 TRUE - throw an error; FALSE (default) - return the first match}
+
+\item{verbose}{- whether to display additional messages (default: FALSE)}
 }
 \value{
 A named vector of matches between v and mrk

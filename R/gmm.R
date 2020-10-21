@@ -157,3 +157,34 @@ GMMreshape <- function(.df)
         dplyr::select( -Value, -AdjVal, -CN, -CP ) %>%
             tidyr::spread( Marker, Prob )
 }
+
+#' Returns GMM models to tidy format
+#'
+#' @param .df - data frame produced by GMMfit()
+#' @return A data frame that maps each marker to the following values in
+#'     the log10-transformed space:
+#' \describe{
+#'   \item{lo/hi}{The low and high cut-off values for outlier exclusion.}
+#'   \item{lambda1/2}{Mixture coefficients for the GMM. Sum up to 1.}
+#'   \item{mu1/2}{Centroids of the two Gaussians in the mixture model.}
+#'   \item{sigma1/2}{The corresponding standard deviation of each Gaussian.}
+#' }
+#' @importFrom magrittr %>%
+#' @export
+GMMmodels <- function(.df)
+{
+    .df %>%
+    dplyr::select( Marker, GMM ) %>%
+    dplyr::mutate_at( "GMM", purrr::map,
+                     ~list(lo = .x$lo, hi = .x$hi,
+                           lambda1 = .x$lambda[1],
+                           lambda2 = .x$lambda[2],
+                           mu1 = .x$mu[1] * (.x$hi - .x$lo) + .x$lo,
+                           mu2 = .x$mu[2] * (.x$hi - .x$lo) + .x$lo,
+                           sigma1 = .x$sigma[1] * (.x$hi - .x$lo),
+                           sigma2 = .x$sigma[2] * (.x$hi - .x$lo))
+                     ) %>%
+    dplyr::mutate_at( "GMM", purrr::map,
+                     ~tidyr::unnest(tibble::enframe(.x),value) ) %>%
+    tidyr::unnest(GMM) %>% tidyr::pivot_wider()
+}
