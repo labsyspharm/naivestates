@@ -78,6 +78,11 @@ if( opt$log == "yes" ||
 
 ## Fit Gaussian mixture models
 GMM <- GMMfit(X, opt$id, !!!mrkv)
+fnMdl <- file.path( opt$out, str_c(sn, "-models.csv") )
+cat( "Saving models to", fnMdl, "\n" )
+GMMmodels(GMM) %>% write_csv( fnMdl )
+
+## Reshape the matrix back to cells-by-marker format
 Y <- GMMreshape(GMM)
 
 cat( "------\n" )
@@ -108,7 +113,7 @@ cat( "------\n" )
 
 ## Identify the output location(s)
 fnOut <- file.path( opt$out, str_c(sn, "-states.csv") )
-cat( "Saving results to", fnOut, "\n")
+cat( "Saving probabilities and calls to", fnOut, "\n")
 Y %>% write_csv( fnOut )
 
 ## Generates plots as necessary

@@ -167,7 +167,7 @@ GMMreshape <- function(.df)
 #'   \item{lo/hi}{The low and high cut-off values for outlier exclusion.}
 #'   \item{lambda1/2}{Mixture coefficients for the GMM. Sum up to 1.}
 #'   \item{mu1/2}{Centroids of the two Gaussians in the mixture model.}
-#'   \item{sigma1/2}{The corresponding variance of each Gaussian.}
+#'   \item{sigma1/2}{The corresponding standard deviation of each Gaussian.}
 #' }
 #' @importFrom magrittr %>%
 #' @export
