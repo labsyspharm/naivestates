@@ -92,9 +92,8 @@ if( opt$mct != "" ) {
 
     ## Load marker -> cell type associations
     cat( "Loading cell type map from", opt$mct, "\n" )
-    tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
-    mct <- findMarkers( colnames(Y), names(tm) )
-    mct <- set_names( tm[names(mct)], mct )
+    mct <- read_csv( opt$mct, col_types=cols() ) %>%
+        distinct() %>% filter(Marker %in% colnames(Y)) %>% deframe()
 
     if( length(mct) == 0 ) {
         warning( "No usable marker -> cell type mappings detected" )
