@@ -13,6 +13,25 @@ bold_theme <- function()
           strip.background = element_blank() )
 }
 
+## Generates a palette for a vector cell type labels
+##
+## Not exported
+makePal <- function( v )
+{
+    ## Visually distinct 20 colors + black
+    ## by Sasha Trubetskoy
+    vd20 <- c("#e6194B", "#3cb44b", "#ffe119", "#4363d8",
+              "#f58231", "#911eb4", "#42d4f4", "#f032e6",
+              "#bfef45", "#fabed4", "#469990", "#dcbeff",
+              "#9A6324", "#fffac8", "#800000", "#aaffc3",
+              "#808000", "#ffd8b1", "#000075", "#a9a9a9",
+              "#000000")
+    
+    v1 <- setdiff( v, "None" ) %>% sort
+    rlang::set_names( vd20[1:length(v1)], v1 ) %>%
+        c( "None" = "lightgray" )
+}
+
 #' Plots a GMM fit for a single marker
 #'
 #' @param FT - the data frame returned by GMMfit()
@@ -98,20 +117,22 @@ plotFitOverview <- function( FT, npt=100000 )
 plotSummary <- function( U )
 {
     v <- c("State", "Anchor") %in% colnames(U)
-    if( all(v) && length(unique(U$Anchor)) <= 24 )
-    {
-        U <- dplyr::mutate( U, Label = stringr::str_c(State, " (", Anchor, ")") )
-        pal <- makePal( U$Label )
-        
-        ## Plot UMAP projection, coloring by cell state calls
-        ggplot2::ggplot( U, ggplot2::aes(UMAP1, UMAP2, color=Label) ) +
+    if( "State" %in% colnames(U) ) {
+        ggplot2::ggplot( U, ggplot2::aes(UMAP1, UMAP2, color=State) ) +
             ggplot2::geom_point() + ggplot2::theme_bw() +
-                ggplot2::scale_color_manual( values=pal,
-                                            name="Cell State Call\n(Dominant Marker)" )
-    }
-    else
+                ggplot2::scale_color_manual(values=makePal(U$State),
+                                            name="Cell Type/State")
+    } else if( ("Dominant" %in% colnames(U)) &&
+               length(unique(U$Dominant)) <= 21 ) {
+        ## Plot UMAP projection, coloring by cell state calls
+        ggplot2::ggplot( U, ggplot2::aes(UMAP1, UMAP2, color=Dominant) ) +
+            ggplot2::geom_point() + ggplot2::theme_bw() +
+                ggplot2::scale_color_manual(values=makePal(U$Dominant),
+                                            name="Dominant Marker" )
+    } else {
         ggplot2::ggplot( U, aes(UMAP1, UMAP2) ) +
             ggplot2::theme_bw() + ggplot2::geom_point(color="gray")
+    }
 }
 
 #' Faceted UMAP plot showing probabilities of individual markers

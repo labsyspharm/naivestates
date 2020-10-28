@@ -92,21 +92,20 @@ if( opt$mct != "" ) {
 
     ## Load marker -> cell type associations
     cat( "Loading cell type map from", opt$mct, "\n" )
-    tm <- read_csv( opt$mct, col_types=cols() ) %>% deframe()
-    mct <- findMarkers( colnames(Y), names(tm) )
-    mct <- set_names( tm[names(mct)], mct )
+    mct <- read_csv( opt$mct, col_types=cols() ) %>%
+        distinct() %>% filter(Marker %in% colnames(Y))
 
-    if( length(mct) == 0 ) {
+    if( nrow(mct) == 0 ) {
         warning( "No usable marker -> cell type mappings detected" )
-        Y <- callStates(Y, opt$id)
+        Y <- findDominant(Y, opt$id)
     } else {
         cat( "Using the following marker -> cell type map:\n" )
-        iwalk( mct, ~cat( .y, "->", .x, "\n" ) )
+        walk2( mct$Marker, mct$State, ~cat(.x, "->", .y, "\n") )
         Y <- callStates(Y, opt$id, mct)
     }
 } else {
     cat( "No marker -> cell type mapping provided\n" )
-    Y <- callStates(Y, opt$id)
+    Y <- findDominant(Y, opt$id)
 }
 
 cat( "------\n" )
@@ -131,7 +130,7 @@ if( opt$plots != "off" )
     ## Compute a UMAP projection
     if( opt$umap ) {
         cat( "Computing a UMAP projection...\n" )
-        U <- umap( Y, c(opt$id, "State", "Anchor") )
+        U <- umap( Y, c(opt$id, "State", "Dominant") )
     
         ## Generate and write a summary plot
         gg <- plotSummary( U )
@@ -140,7 +139,7 @@ if( opt$plots != "off" )
         cat( "Plotted summary to", fn, "\n" )
 
         ## Generate and write faceted probabilities plot
-        gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
+        gg <- plotProbs( U, c(opt$id, "State", "Dominant") )
         fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.", opt$plots) )
         suppressMessages(ggsave( fn, gg, width=9, height=7 ))
         cat( "Plotted probabilities to", fn, "\n" )
