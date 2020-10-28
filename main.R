@@ -130,7 +130,7 @@ if( opt$plots != "off" )
     ## Compute a UMAP projection
     if( opt$umap ) {
         cat( "Computing a UMAP projection...\n" )
-        U <- umap( Y, c(opt$id, "State", "Anchor") )
+        U <- umap( Y, c(opt$id, "State", "Dominant") )
     
         ## Generate and write a summary plot
         gg <- plotSummary( U )
@@ -139,7 +139,7 @@ if( opt$plots != "off" )
         cat( "Plotted summary to", fn, "\n" )
 
         ## Generate and write faceted probabilities plot
-        gg <- plotProbs( U, c(opt$id, "State", "Anchor") )
+        gg <- plotProbs( U, c(opt$id, "State", "Dominant") )
         fn <- file.path( file.path(opt$out, "plots"), str_c(sn, "-probs.", opt$plots) )
         suppressMessages(ggsave( fn, gg, width=9, height=7 ))
         cat( "Plotted probabilities to", fn, "\n" )

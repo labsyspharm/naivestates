@@ -2,20 +2,6 @@
 ##
 ## by Artem Sokolov
 
-## Generates a palette for a vector cell type labels
-##
-## Not exported
-makePal <- function( v )
-{
-    pal <- c("Medium", "Dark", "Light") %>%
-        purrr::map( ggthemes::few_pal ) %>%
-        purrr::map( ~.(8) ) %>% unlist
-    
-    v1 <- setdiff( v, "Other (None)" )
-    set_names( pal[1:length(v1)], v1 ) %>%
-        c( "Other (None)" = "gray" )
-}
-
 #' Augments a matrix of marker probabilities with its UMAP projection
 #' @param X data frame of probabilities or raw expression
 #' @param excl character vector of column names to exclude from modeling
