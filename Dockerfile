@@ -1,4 +1,6 @@
-FROM rocker/tidyverse:3.6.2
+FROM rocker/tidyverse:4.0.2
+
+RUN apt-get update && apt-get install libxt6
 
 RUN R -e "install.packages(c('optparse','mixtools','egg','uwot','ggthemes'))"
 
