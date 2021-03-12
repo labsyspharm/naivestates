@@ -119,6 +119,7 @@ GMMfit <- function(X, cid, ..., bounds, baseline=0.01, mu_init=c(0.2,0.8), seed=
 
     ## Isolate the finite marker values to use for modeling
     MV <- X1 %>% dplyr::filter( is.finite(Values) ) %>%
+        dplyr::filter( Values != 0 ) %>%
         dplyr::group_by( Marker ) %>%
         dplyr::summarize_at("Values",list)
 
