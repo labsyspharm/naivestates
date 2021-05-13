@@ -26,7 +26,10 @@ findMarkers <- function(v, mrk, sfx="", errOnNotFound=FALSE,
     ## Determine if we're working with a file of markers or if
     ##   markers are specified as a comma,delimited,list
     if( file.exists(mrk) ) {
-        mrk <- scan(mrk, what=character(), quiet=TRUE)
+        M <- read_csv(mrk, col_types=cols())
+        if( !("marker_name" %in% colnames(M)) )
+            stop( mrk, " must be in .csv format and contain a marker_name column" )
+        mrk <- M %>% pull(marker_name)
     } else if( mrk == "auto" ) {
         mrk <- autoMarkers(v)
         if( sfx != "$" ) mrk <- purrr::keep( mrk, ~grepl(sfx, .x) )
