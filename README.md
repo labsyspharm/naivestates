@@ -62,11 +62,11 @@ and tool-level arguments:
 * `-i /data/myfile.csv` specifies which data file to process
 * `-m aSMA,CD45,panCK` specifies the markers of interest (NOTE: comma-delimited, no spaces)
 
-If there is a large number of markers, place their names in a standalone file `markers.txt` with one marker per line. Ensure that the file lives in `/path/to/data/folder/` and modify the Docker call to use the new file:
+Alternatively, you can provide a `markers.csv` defined in an [MCMICRO-compatible format](https://mcmicro.org/directory-structure.html#raw-data) (i.e., comma-delimited with marker names listed in the `marker_name` column). Ensure that the file lives in `/path/to/data/folder/` and modify the Docker call to use the new file:
 
 ```
 docker run --rm -v /path/to/data/folder:/data labsyspharm/naivestates:1.2.0 \
-  /app/main.R -i /data/myfile.csv -m /data/markers.txt
+  /app/main.R -i /data/myfile.csv -m /data/markers.csv
 ```
 
 ## Additional parameters
