@@ -58,6 +58,9 @@ callStates <- function(P, cid, M, fcomb="hmean", pthr=0.5 )
     else
         stop( "fcomb must be a function, \"gmean\", or \"hmean\"" )
 
+    ## Isolate relevant markers
+    S <- P %>% dplyr::select( CellID = {{cid}}, dplyr::all_of(M$Marker) )
+    
     ## Fill out implicit negatives
     M <- M %>% dplyr::mutate( Expressed = "Yes" ) %>%
         tidyr::pivot_wider( names_from = Marker, values_from = Expressed, values_fill = "No" ) %>%
@@ -67,8 +70,7 @@ callStates <- function(P, cid, M, fcomb="hmean", pthr=0.5 )
         tidyr::pivot_wider( names_from = Expressed, values_from = Marker )
 
     ## Compute scores for each cellID/state pair
-    S <- P %>% dplyr::rename( CellID = {{cid}} ) %>%
-        tidyr::pivot_longer( -CellID, names_to="Marker", values_to="Value" ) %>%
+    S <- S %>% tidyr::pivot_longer( -CellID, names_to="Marker", values_to="Value" ) %>%
         dplyr::group_by( CellID ) %>%
         dplyr::summarize( Expression = list(rlang::set_names(Value, Marker)), .groups="drop" ) %>%
         tidyr::expand_grid( M ) %>%
@@ -87,7 +89,7 @@ callStates <- function(P, cid, M, fcomb="hmean", pthr=0.5 )
     ## Reshape to cell-by-state matrix of probabilities and combine with final calls
     F <- S %>% tidyr::pivot_wider( names_from = State, values_from = Prob ) %>%
         dplyr::inner_join( G, ., by="CellID" ) %>%
-        dplyr::rename( {{cid}} := CellID )
+        dplyr::rename( !!rlang::sym(cid) := CellID )
 
     F
 }

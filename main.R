@@ -83,7 +83,7 @@ cat( "Saving models to", fnMdl, "\n" )
 GMMmodels(GMM) %>% write_csv( fnMdl )
 
 ## Reshape the matrix back to cells-by-marker format
-Y <- GMMreshape(GMM) %>% findDominant(opt$id)
+Y <- GMMreshape(GMM)
 
 cat( "------\n" )
 
