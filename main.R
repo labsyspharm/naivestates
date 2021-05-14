@@ -97,23 +97,30 @@ if( opt$mct != "" ) {
 
     if( nrow(mct) == 0 ) {
         warning( "No usable marker -> cell type mappings detected" )
-        Y <- findDominant(Y, opt$id)
+        Z <- NULL
     } else {
         cat( "Using the following marker -> cell type map:\n" )
         walk2( mct$Marker, mct$State, ~cat(.x, "->", .y, "\n") )
-        Y <- callStates(Y, opt$id, mct)
+        Z <- callStates(Y, opt$id, mct, "hmean", 1 / length(unique(mct$State)))
     }
 } else {
     cat( "No marker -> cell type mapping provided\n" )
-    Y <- findDominant(Y, opt$id)
+    Z <- NULL
 }
 
 cat( "------\n" )
 
-## Identify the output location(s)
-fnOut <- file.path( opt$out, str_c(sn, "-states.csv") )
-cat( "Saving probabilities and calls to", fnOut, "\n")
+## Write out probabilities
+fnOut <- file.path( opt$out, str_c(sn, "-probs.csv") )
+cat( "Saving probabilities to", fnOut, "\n")
 Y %>% write_csv( fnOut )
+
+## Write out state calls
+if( !is.null(Z) ) {
+    fnOut <- file.path( opt$out, str_c(sn, "-states.csv") )
+    cat( "Saving state calls to", fnOut, "\n" )
+    Z %>% write_csv( fnOut )
+}
 
 ## Generates plots as necessary
 if( opt$plots != "off" )
