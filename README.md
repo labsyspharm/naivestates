@@ -77,6 +77,7 @@ The following parameters are optional, but may be useful in certain scenarios:
 * `--plots <off|pdf|png>` - (default: `off`) Produces QC plots of individual marker fits and summary UMAP plots in .png or .pdf format.
 * `--id <name>` - (default: `CellID`) Name of the column that contains cell IDs
 * `--log <yes|no|auto>` - (default: `auto`) When a log10 transformation should be applied prior to fitting the data. The tool will do this automatically if it detects large values. Use `--log no` to force the use of original, non-transformed values instead.
+* `--comb <hmean|gmean>` - (default: `hmean`) Whether to use harmonic mean (`hmean`) or geometric mean (`gmean`) to combine probabilities of expression for individual markers.
 * `--sfx <suffix>` - (default: automatically determined) A common suffix on the marker columns (e.g., `_cellMask` or `_nucleiMask`). The suffix will be removed in the output plots and tables to improve readability. Use `$` to force an empty suffix.
 * `--umap` - (default: disabled) Include this flag to generate UMAP plots.
 * `--mct <filename>` - The tool has a basic marker -> cell type (mct) mapping in `typemap.csv`. More sophisticated mct mappings can be defined by creating a `custom-map.csv` file with two columns: `Marker` and `State`. Ensure that `custom-map.csv` is in `/path/to/data/folder` and point the tool at it with `--mct` (e.g., `/app/main.R -i /data/myfile.csv --mct /data/custom-map.csv -m aSMA,CD45,panCK`)
