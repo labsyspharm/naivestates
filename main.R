@@ -27,6 +27,8 @@ option_list <- list(
                 help="Whether to apply a log transform <yes|no|auto>"),
     make_option("--sfx", type="character", default="",
                 help="Common suffix on marker columns (e.g., _cellMask)"),
+    make_option("--comb", type="character", default="hmean",
+                help="Operation for combining probabilities <hmean|gmean>"),
     make_option("--umap", action="store_true", default=FALSE,
                 help="Generate UMAP plots")
 )
@@ -39,6 +41,8 @@ if( !(opt$log %in% c("yes","no","auto")) )
     stop( "--log must be one of <yes|no|auto>" )
 if( !(opt$plots %in% c("off", "pdf", "png")) )
     stop( "--plots must be one of <off|pdf|png>" )
+if( !(opt$comb %in% c("hmean", "gmean")) )
+    stop( "--comb must be one of <hmean|gmean>" )
 
 ## Identify the sample name
 sn <- basename( opt$`in` ) %>% str_split( "\\." ) %>%
@@ -101,7 +105,8 @@ if( opt$mct != "" ) {
     } else {
         cat( "Using the following marker -> cell type map:\n" )
         walk2( mct$Marker, mct$State, ~cat(.x, "->", .y, "\n") )
-        Z <- callStates(Y, opt$id, mct, "hmean", 1 / length(unique(mct$State)))
+        cat( "Combining probabilities with", opt$comb, "\n" )
+        Z <- callStates(Y, opt$id, mct, opt$comb, 1 / length(unique(mct$State)))
     }
 } else {
     cat( "No marker -> cell type mapping provided\n" )
