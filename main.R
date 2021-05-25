@@ -27,7 +27,7 @@ option_list <- list(
                 help="Whether to apply a log transform <yes|no|auto>"),
     make_option("--sfx", type="character", default="",
                 help="Common suffix on marker columns (e.g., _cellMask)"),
-    make_option("--comb", type="character", default="hmean",
+    make_option("--comb", type="character", default="gmean",
                 help="Operation for combining probabilities <hmean|gmean>"),
     make_option("--umap", action="store_true", default=FALSE,
                 help="Generate UMAP plots")
