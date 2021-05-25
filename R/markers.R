@@ -25,17 +25,20 @@ findMarkers <- function(v, mrk, sfx="", errOnNotFound=FALSE,
 
     ## Determine if we're working with a file of markers or if
     ##   markers are specified as a comma,delimited,list
-    if( file.exists(mrk) ) {
-        M <- read_csv(mrk, col_types=cols())
-        if( !("marker_name" %in% colnames(M)) )
-            stop( mrk, " must be in .csv format and contain a marker_name column" )
-        mrk <- M %>% pull(marker_name)
-    } else if( mrk == "auto" ) {
-        mrk <- autoMarkers(v)
-        if( sfx != "$" ) mrk <- purrr::keep( mrk, ~grepl(sfx, .x) )
-    } else {
-        mrk <- stringr::str_split( mrk, "," )[[1]]
+    if( length(mrk) == 1 ) {
+        if( file.exists(mrk) ) {
+            M <- read_csv(mrk, col_types=cols())
+            if( !("marker_name" %in% colnames(M)) )
+                stop( mrk, " must be in .csv format and contain a marker_name column" )
+            mrk <- M %>% pull(marker_name)
+        } else if( mrk == "auto" ) {
+            mrk <- autoMarkers(v)
+            if( sfx != "$" ) mrk <- purrr::keep( mrk, ~grepl(sfx, .x) )
+        } else if( grepl(",", mrk) ) {
+            mrk <- stringr::str_split( mrk, "," )[[1]]
+        }
     }
+    ## else assume that mrk already contains a vector of names
 
     ## Remove the suffix if it's already present in the requested names
     mrk <- stringr::str_replace( mrk, sfx, "" )
